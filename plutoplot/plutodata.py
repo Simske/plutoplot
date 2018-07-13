@@ -1,24 +1,24 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-
 
 class PlutoData:
 
-    def __init__(self, n: int=-1, wdir: str=""):
+    def __init__(self, n: int=-1, wdir: str="", part_of_sim=None):
         """
         Read PLUTO output file
         n: output step number. Default: -1, uses last picture
         wdir: path to data directory
+        part_of_sim: flag for alternative initialization
         """
         self.wdir = wdir
-
-        # read info about data file
-        self.read_vars(n)
-        # read grid data
-        self.read_grid()
-        # read data
-        self.read_data()
+        if part_of_sim is None:
+            # read info about data file
+            self.read_vars(n)
+            # read grid data
+            self.read_grid()
+            # read data
+            self.read_data()
 
     def read_vars(self, n: int=-1):
         """Read simulation step data and written variables"""
@@ -84,8 +84,10 @@ class PlutoData:
         for i, var in enumerate(self.vars):
             setattr(self, var, shaped[i].reshape(newshape))
 
-    def plot(self, var='rho', figsize=(10, 10), cbar=True, vmin=None, vmax=None, cmap=None):
+    def plot(self, var=None, figsize=(10, 10), cbar=True, vmin=None, vmax=None, cmap=None):
         """Simple colorplot for 2-dim data"""
+        if var is None:
+            var = self.vars[0]
         self.fig, self.ax = plt.subplots(figsize=figsize)
         ax = self.ax
 
