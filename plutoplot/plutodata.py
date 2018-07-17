@@ -88,9 +88,11 @@ class PlutoData:
         """Simple colorplot for 2-dim data"""
         if var is None:
             var = self.vars[0]
+        if isinstance(var, str):
+            var = getattr(self, var)
         self.fig, self.ax = plt.subplots(figsize=figsize)
         ax = self.ax
 
-        im = ax.pcolormesh(self.x1, self.x2, getattr(self, var), vmin=vmin, vmax=vmax, cmap=cmap)
+        im = ax.pcolormesh(self.x1, self.x2, var, vmin=vmin, vmax=vmax, cmap=cmap)
         ax.set_aspect(1)
         plt.colorbar(im)
