@@ -16,9 +16,9 @@ class Simulation:
         self.read_grid()
 
         # dict for individual data frames
-        self.data = {}
+        self._data = {}
 
-    def read_vars(self):
+    def read_vars(self) -> None:
         """Read simulation step data and written variables"""
         with open(os.path.join(self.wdir, 'dbl.out'), 'r') as f:
             lines = f.readlines()
@@ -34,7 +34,7 @@ class Simulation:
                 split = line.split()
                 self.t[i], self.dt[i], self.nstep[i] = split[1:4]
 
-    def read_grid(self):
+    def read_grid(self) -> None:
         """
         Read PLUTO gridfile and calculate center of cells
         wdir: Data directory, if empty object data directory is used
@@ -65,32 +65,52 @@ class Simulation:
         self.x2, self.dx2 = x[1]
         self.x3, self.dx3 = x[2]
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: int) -> PlutoData:
         """
         Access individual data frames, returns them as PlutoData
         If file is already loaded, object is returned, otherwise data is loaded
         """
         try:
-            return self.data[key]
+            return self._data[key]
         except KeyError:
-            if key >= self.n:
-                raise IndexError('Data index out of range')
+            # load data frame
+            self._data[key] = self._load_data(key)
+            return self._data[key]
 
-            # Construct PlutoData object manually
-            D = PlutoData(wdir=self.wdir, part_of_sim=True)
-            # vars
-            D.vars = self.vars
-            D.n, D.t, D.dt, D.nstep = key, self.t[key], self.dt[key], self.nstep[key]
-            # grid
-            D.x1, D.x2, D.x3 = self.x1, self.x2, self.x3
-            D.dx1, D.dx2, D.dx3 = self.dx1, self.dx2, self.dx3
-            D.dims = self.dims
-            # read Data
-            D.read_data()
-            self.data[key] = D
-            return D
+    def _load_data(self, key: int) -> PlutoData:
+        if key >= self.n:
+            raise IndexError('Data index out of range')
+
+        # Construct PlutoData object manually
+        D = PlutoData(wdir=self.wdir, part_of_sim=True)
+        # vars
+        D.vars = self.vars
+        D.n, D.t, D.dt, D.nstep = key, self.t[key], self.dt[key], self.nstep[key]
+        # grid
+        D.x1, D.x2, D.x3 = self.x1, self.x2, self.x3
+        D.dx1, D.dx2, D.dx3 = self.dx1, self.dx2, self.dx3
+        D.dims = self.dims
+        # read Data
+        D.read_data()
+        return D
 
     def __iter__(self):
         """Iterate over all data frames"""
         for i in range(self.n):
             yield self[i]
+
+    def memory_iter(self):
+        """Iterate over all data frames, deleting each after loop"""
+        for i in range(self.n):
+            yield self._load_data(i)
+
+    def __len__(self):
+        return self.n
+
+    def __delitem__(self, key: int) -> None:
+        """Delete data object to free memory"""
+        del self._data[key]
+
+    def clear(self) -> None:
+        """Clear loaded data frames"""
+        self._data.clear()
