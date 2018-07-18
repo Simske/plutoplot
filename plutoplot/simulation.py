@@ -65,11 +65,24 @@ class Simulation:
         self.x2, self.dx2 = x[1]
         self.x3, self.dx3 = x[2]
 
+    def _index(self, key: int) -> int:
+        """Check if index is in range and implements negative indexing"""
+        if not isinstance(key, int):
+            raise IndexError("Data index has to be int")
+        elif key >= self.n:
+            raise IndexError("Data index out of range")
+        elif key < 0:
+            key = self._index(self.n + key)
+            if key < 0:
+                raise IndexError("Data index out of range")
+        return key
+
     def __getitem__(self, key: int) -> PlutoData:
         """
         Access individual data frames, returns them as PlutoData
         If file is already loaded, object is returned, otherwise data is loaded
         """
+        key = self._index(key)
         try:
             return self._data[key]
         except KeyError:
@@ -78,8 +91,8 @@ class Simulation:
             return self._data[key]
 
     def _load_data(self, key: int) -> PlutoData:
-        if key >= self.n:
-            raise IndexError('Data index out of range')
+        """Load data frame"""
+        key = self._index(key)
 
         # Construct PlutoData object manually
         D = PlutoData(wdir=self.wdir, part_of_sim=True)
