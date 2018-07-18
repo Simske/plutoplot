@@ -127,3 +127,12 @@ class Simulation:
     def clear(self) -> None:
         """Clear loaded data frames"""
         self._data.clear()
+
+    def __str__(self) -> str:
+        return f"""PLUTO simulation, wdir: {self.wdir}
+resolution: {self.dims},
+data files: {self.n}, last time: {self.t[-1]}
+Variables: {self.vars}"""
+
+    def __repr__(self) -> str:
+        return f"Simulation('{self.wdir}')"
