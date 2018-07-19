@@ -112,9 +112,14 @@ class Simulation:
         for i in range(self.n):
             yield self[i]
 
-    def memory_iter(self):
-        """Iterate over all data frames, deleting each after loop"""
-        for i in range(self.n):
+    def memory_iter(self, start=0, stop=-1, step=1):
+        """
+        Iterate over all data frames, deleting each after loop
+        Takes arguments for start, stop, step
+        """
+        start = self._index(start)
+        stop = self._index(stop)
+        for i in range(start, stop+1, step):
             yield self._load_data(i)
 
     def __len__(self):
