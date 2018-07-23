@@ -12,7 +12,11 @@ class Simulation:
     """
     def __init__(self, wdir: str=''):
         self.wdir = wdir
-        self.read_vars()
+        try:
+            self.read_vars()
+        except FileNotFoundError:
+            self.wdir = os.path.join(wdir, 'data')
+            self.read_vars()
         self.read_grid()
 
         # dict for individual data frames
