@@ -92,6 +92,9 @@ class PlutoData:
             var = getattr(self, var)
         self.fig, self.ax = plt.subplots(figsize=figsize)
         ax = self.ax
+        if ax is None:
+            self.fig, self.ax = plt.subplots(figsize=figsize)
+            ax = self.ax
 
         im = ax.pcolormesh(self.x1, self.x2, var, vmin=vmin, vmax=vmax, cmap=cmap)
         ax.set_aspect(1)
