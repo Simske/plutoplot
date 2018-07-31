@@ -98,9 +98,14 @@ class PlutoData:
         if self.dims[0] > 1:
             newshape.append(self.dims[0])
 
+        self.data = {}
         # reshape data and save them under varname
         for i, var in enumerate(self.vars):
-            setattr(self, var, shaped[i].reshape(newshape))
+            self.data[var] = shaped[i].reshape(newshape)
+            setattr(self, var, self.data[var])
+
+    def __getitem__(self, var: str):
+        return self.data[var]
 
     def _latex(self, coord: str):
         map = {'phi': r'$\phi$', 'theta': r'$\theta$'}
