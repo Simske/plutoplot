@@ -112,8 +112,8 @@ class Simulation:
         self._data.clear()
 
     def __str__(self) -> str:
-        return f"""PLUTO simulation, wdir: {self.wdir}
-resolution: {self.dims},
+        return f"""PLUTO simulation, wdir: '{self.wdir}'
+resolution: {self.dims}, {self.coordinate_system} coordinates
 data files: {self.n}, last time: {self.t[-1]}
 Variables: {self.vars}"""
 

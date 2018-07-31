@@ -154,3 +154,14 @@ class PlutoData:
         ax.set_ylabel(self._latex(self.coord_names[1]))
         ax.set_aspect(1)
         plt.colorbar(im)
+
+    def __str__(self):
+        return f"""PlutoData, wdir: '{self.wdir}'
+resolution: {self.dims}, {self.coordinate_system} coordinates
+file nr: {self.n}, time: {self.t}, simulation step: {self.nstep}
+Variables: {self.vars}"""
+
+
+    def __repr__(self):
+        return f"PlutoData({self.n}, wdir='{self.wdir}'" + \
+                (f", coordinates='{self.coordinate_system}'" if self.coordinate_system != 'cartesian' else "") + ")"
