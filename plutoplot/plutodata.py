@@ -3,22 +3,36 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class PlutoData:
+    _coordinate_systems = {'cartesian': ['x', 'y', 'z'],
+                          'cylindrical': ['R', 'z'],
+                          'polar': ['r', 'phi', 'z'],
+                          'spherical': ['r', 'theta', 'phi']}
 
-    def __init__(self, n: int=-1, wdir: str="", part_of_sim=None):
+    def __init__(self, n: int=-1, wdir: str="", coordinates: str='cartesian', part_of_sim=False):
         """
         Read PLUTO output file
         n: output step number. Default: -1, uses last picture
         wdir: path to data directory
         part_of_sim: flag for alternative initialization
+        coordinates: 'cartesian', 'cylindrical', 'polar', or 'spherical', only for names
         """
         self.wdir = wdir
-        if part_of_sim is None:
+        if not part_of_sim:
             # read info about data file
             self.read_vars(n)
             # read grid data
             self.read_grid()
             # read data
             self.read_data()
+            try:
+                self.coordinate_system = coordinates
+                self.coord_names = self.coordinate_systems[coordinates]
+                self.coord_names = self._coordinate_systems[coordinates]
+            except KeyError:
+                raise KeyError('Coordinate system not recognized')
+
+            for i, (_, coord_name) in enumerate(zip(self.dims, self.coord_names), start=1):
+                setattr(self, coord_name, getattr(self, f'x{i}'))
 
     def read_vars(self, n: int=-1):
         """Read simulation step data and written variables"""
@@ -58,9 +72,13 @@ class PlutoData:
                     # calculate center of cell, and difference between cells
                     x.append((np.sum(data[:, 1:], axis=1)/2, data[:, 2] - data[:, 1]))
 
-        self.x1, self.dx1 = x[0]
-        self.x2, self.dx2 = x[1]
-        self.x3, self.dx3 = x[2]
+        self.grid = ([], [])
+        for i, (xn, coord_name) in enumerate(zip(x, self.coord_names), start=1):
+            setattr(self, f"x{i}", xn[0])
+            setattr(self, f"dx{i}", xn[1])
+            self.grid[0].append(getattr(self, f"x{i}"))
+            self.grid[1].append(getattr(self, f"dx{i}"))
+            setattr(self, coord_name, getattr(self, f'x{i}'))
 
     def read_data(self):
         """
@@ -84,18 +102,25 @@ class PlutoData:
         for i, var in enumerate(self.vars):
             setattr(self, var, shaped[i].reshape(newshape))
 
-    def plot(self, var=None, figsize=(10, 10), cbar=True, vmin=None, vmax=None, cmap=None):
+    def _latex(self, coord: str):
+        map = {'phi': r'$\phi$', 'theta': r'$\theta$'}
+        try:
+            return map[coord]
+        except KeyError:
+            return coord
+
+    def plot(self, var=None, ax=None, figsize=(10, 10), cbar=True, vmin=None, vmax=None, cmap=None):
         """Simple colorplot for 2-dim data"""
         if var is None:
             var = self.vars[0]
         if isinstance(var, str):
             var = getattr(self, var)
-        self.fig, self.ax = plt.subplots(figsize=figsize)
-        ax = self.ax
         if ax is None:
             self.fig, self.ax = plt.subplots(figsize=figsize)
             ax = self.ax
 
         im = ax.pcolormesh(self.x1, self.x2, var, vmin=vmin, vmax=vmax, cmap=cmap)
+        ax.set_xlabel(self._latex(self.coord_names[0]))
+        ax.set_ylabel(self._latex(self.coord_names[1]))
         ax.set_aspect(1)
         plt.colorbar(im)

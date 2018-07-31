@@ -10,13 +10,20 @@ class Simulation:
     loads individual files when needed.
     Simulation is subscriptable and iterable.
     """
-    def __init__(self, wdir: str=''):
+    def __init__(self, wdir: str='', coordinates: str='cartesian'):
         self.wdir = wdir
         try:
             self.read_vars()
         except FileNotFoundError:
             self.wdir = os.path.join(wdir, 'data')
             self.read_vars()
+
+        try:
+            self.coordinate_system = coordinates
+            self.coord_names = PlutoData._coordinate_systems[coordinates]
+        except KeyError:
+            raise KeyError('Coordinate system not recognized')
+
         self.read_grid()
 
         # dict for individual data frames
@@ -38,36 +45,9 @@ class Simulation:
                 split = line.split()
                 self.t[i], self.dt[i], self.nstep[i] = split[1:4]
 
-    def read_grid(self) -> None:
-        """
-        Read PLUTO gridfile and calculate center of cells
-        wdir: Data directory, if empty object data directory is used
-        """
-        x = []
-        self.dims = []
-        with open(os.path.join(self.wdir, 'grid.out'), 'r') as gf:
-            # read all dimensions
-            while True:
-                # read line by line, stop if EOF
-                line = gf.readline()
-                if not line:
-                    break
-                # ignore comments
-                if line[0] == '#':
-                    continue
-                # find line with resolution in dimension
-                splitted = line.split()
-                if len(splitted) == 1:
-                    dim = int(splitted[0])
-                    self.dims.append(dim)
-                    # read all data from dimension, moves file pointer
-                    data = np.fromfile(gf, sep=' ', count=dim*3).reshape(-1, 3)
-                    # calculate center of cell, and difference between cells
-                    x.append((np.sum(data[:, 1:], axis=1)/2, data[:, 2] - data[:, 1]))
 
-        self.x1, self.dx1 = x[0]
-        self.x2, self.dx2 = x[1]
-        self.x3, self.dx3 = x[2]
+    # Use read_grid() from PlutoData object
+    read_grid = PlutoData.read_grid
 
     def _index(self, key: int) -> int:
         """Check if index is in range and implements negative indexing"""
