@@ -128,14 +128,28 @@ class PlutoData:
         for i, var in enumerate(self.vars):
             self.data[var] = shaped[i].reshape(newshape)
             setattr(self, var, self.data[var])
+            if var[0] == 'v':
+                new_name = f"v{self.coord_names[int(var[2])-1]}"
+                self.data[new_name] = self.data[var]
+                setattr(self, new_name, self.data[var])
 
     def __getitem__(self, var: str) -> np.ndarray:
         return self.data[var]
 
-    def _latex(self, coord: str) -> str:
-        map = {'phi': r'$\phi$', 'theta': r'$\theta$'}
+    def _latex(self, coord: str, tags: bool=True) -> str:
+        latex_map = {
+            'phi': r'\phi',
+            'theta': r'\theta',
+            'rho': r'\rho',
+        }
+
         try:
-            return map[coord]
+            if coord[0] == 'v':
+                return f"$v_{{{self._latex(self.coord_names[int(coord[2])-1], 0)}}}$"
+            if tags:
+                return f'${latex_map[coord]}$'
+            else:
+                return latex_map[coord]
         except KeyError:
             return coord
 
@@ -144,7 +158,10 @@ class PlutoData:
         if var is None:
             var = self.vars[0]
         if isinstance(var, str):
+            varname = var
             var = getattr(self, var)
+        else:
+            varname = None
         if ax is None:
             self.fig, self.ax = plt.subplots(figsize=figsize)
             ax = self.ax
@@ -153,7 +170,7 @@ class PlutoData:
         ax.set_xlabel(self._latex(self.coord_names[0]))
         ax.set_ylabel(self._latex(self.coord_names[1]))
         ax.set_aspect(1)
-        plt.colorbar(im)
+        plt.colorbar(im, label=self._latex(varname))
 
     def __str__(self) -> None:
         return f"""PlutoData, wdir: '{self.wdir}'
