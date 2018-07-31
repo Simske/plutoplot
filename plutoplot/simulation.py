@@ -78,17 +78,11 @@ class Simulation:
         """Load data frame"""
         key = self._index(key)
 
-        # Construct PlutoData object manually
-        D = PlutoData(wdir=self.wdir, part_of_sim=True)
-        # vars
-        D.vars = self.vars
-        D.n, D.t, D.dt, D.nstep = key, self.t[key], self.dt[key], self.nstep[key]
-        # grid
-        D.x1, D.x2, D.x3 = self.x1, self.x2, self.x3
-        D.dx1, D.dx2, D.dx3 = self.dx1, self.dx2, self.dx3
-        D.dims = self.dims
-        # read Data
-        D.read_data()
+        D = PlutoData(wdir=self.wdir, coordinates=self.coordinate_system,
+                      vars=(self.vars, key, self.t[key], self.dt[key], self.nstep[key]),
+                      grid=self.grid,
+                      dims=self.dims)
+
         return D
 
     def __iter__(self):
