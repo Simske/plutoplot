@@ -59,7 +59,7 @@ class PlutoData:
             self.read_data()
 
 
-    def read_vars(self, n: int=-1):
+    def read_vars(self, n: int=-1) -> None:
         """Read simulation step data and written variables"""
         with open(os.path.join(self.wdir, 'dbl.out'), 'r') as f:
             lines = f.readlines()
@@ -70,7 +70,7 @@ class PlutoData:
             n, t, dt, nstep, _, _, *self.vars = lines[n].split()
             self.n, self.t, self.dt, self.nstep = int(n), float(t), float(dt), int(nstep)
 
-    def read_grid(self):
+    def read_grid(self) -> None:
         """
         Read PLUTO gridfile and calculate center of cells
         wdir: Data directory, if empty object data directory is used
@@ -105,7 +105,7 @@ class PlutoData:
             self.grid[1].append(getattr(self, f"dx{i}"))
             setattr(self, coord_name, getattr(self, f'x{i}'))
 
-    def read_data(self):
+    def read_data(self) -> None:
         """
         Read actual data file. Requires information from read_vars(), read_grid()
         (which are run by __init__)
@@ -129,17 +129,17 @@ class PlutoData:
             self.data[var] = shaped[i].reshape(newshape)
             setattr(self, var, self.data[var])
 
-    def __getitem__(self, var: str):
+    def __getitem__(self, var: str) -> np.ndarray:
         return self.data[var]
 
-    def _latex(self, coord: str):
+    def _latex(self, coord: str) -> str:
         map = {'phi': r'$\phi$', 'theta': r'$\theta$'}
         try:
             return map[coord]
         except KeyError:
             return coord
 
-    def plot(self, var=None, ax=None, figsize=(10, 10), cbar=True, vmin=None, vmax=None, cmap=None):
+    def plot(self, var=None, ax=None, figsize=(10, 10), cbar=True, vmin=None, vmax=None, cmap=None) -> None:
         """Simple colorplot for 2-dim data"""
         if var is None:
             var = self.vars[0]
@@ -155,13 +155,13 @@ class PlutoData:
         ax.set_aspect(1)
         plt.colorbar(im)
 
-    def __str__(self):
+    def __str__(self) -> None:
         return f"""PlutoData, wdir: '{self.wdir}'
 resolution: {self.dims}, {self.coordinate_system} coordinates
 file nr: {self.n}, time: {self.t}, simulation step: {self.nstep}
 Variables: {self.vars}"""
 
 
-    def __repr__(self):
+    def __repr__(self) -> None:
         return f"PlutoData({self.n}, wdir='{self.wdir}'" + \
                 (f", coordinates='{self.coordinate_system}'" if self.coordinate_system != 'cartesian' else "") + ")"

@@ -1,6 +1,8 @@
 import os
+from typing import Generator
 import numpy as np
 import matplotlib.pyplot as plt
+# local imports
 from .plutodata import PlutoData
 
 class Simulation:
@@ -85,12 +87,12 @@ class Simulation:
 
         return D
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[PlutoData, None, None]:
         """Iterate over all data frames"""
         for i in range(self.n):
             yield self[i]
 
-    def memory_iter(self, start=0, stop=-1, step=1):
+    def memory_iter(self, start=0, stop=-1, step=1) -> Generator[PlutoData, None, None]:
         """
         Iterate over all data frames, deleting each after loop
         Takes arguments for start, stop, step
@@ -100,7 +102,7 @@ class Simulation:
         for i in range(start, stop+1, step):
             yield self._load_data(i)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.n
 
     def __delitem__(self, key: int) -> None:
