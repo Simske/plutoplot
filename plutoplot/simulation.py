@@ -1,4 +1,5 @@
 import os
+import multiprocessing
 from typing import Generator
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,7 +8,7 @@ from .plutodata import PlutoData
 
 class Simulation:
     """
-    Container class for PLUTO (http://plutocode.ph.unito.it/) outputself.
+    Container class for PLUTO (http://plutocode.ph.unito.it/) output.
     Reads the metadata of all files in working directory (wdir), and
     loads individual files when needed.
     Simulation is subscriptable and iterable.
@@ -101,6 +102,10 @@ class Simulation:
         stop = self._index(stop)
         for i in range(start, stop+1, step):
             yield self._load_data(i)
+    
+    def parallel_calc(self, func):
+        with multiprocessing.Pool() as p:
+            return np.array(p.map(func, self.memory_iter()))
 
     def __len__(self) -> int:
         return self.n
