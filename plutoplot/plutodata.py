@@ -137,6 +137,8 @@ class PlutoData:
         return self.data[var]
 
     def _latex(self, coord: str, tags: bool=True) -> str:
+        if coord is None:
+            return ''
         latex_map = {
             'phi': r'\phi',
             'theta': r'\theta',
