@@ -172,7 +172,8 @@ class PlutoData:
         ax.set_xlabel(self._latex(self.coord_names[0]))
         ax.set_ylabel(self._latex(self.coord_names[1]))
         ax.set_aspect(1)
-        plt.colorbar(im, label=self._latex(varname))
+        if cbar:
+            plt.colorbar(im, label=self._latex(varname))
 
     def __str__(self) -> None:
         return f"""PlutoData, wdir: '{self.wdir}'
