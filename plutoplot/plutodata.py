@@ -126,7 +126,7 @@ class PlutoData:
         self.data = {}
         # reshape data and save them under varname
         for i, var in enumerate(self.vars):
-            self.data[var] = shaped[i].reshape(newshape)
+            self.data[var] = shaped[i].reshape(newshape).T
             setattr(self, var, self.data[var])
             if var[0] == 'v':
                 new_name = f"v{self.coord_names[int(var[2])-1]}"
@@ -168,7 +168,7 @@ class PlutoData:
             self.fig, self.ax = plt.subplots(figsize=figsize)
             ax = self.ax
 
-        im = ax.pcolormesh(self.x1, self.x2, var, vmin=vmin, vmax=vmax, cmap=cmap)
+        im = ax.pcolormesh(self.x1, self.x2, var.T, vmin=vmin, vmax=vmax, cmap=cmap)
         ax.set_xlabel(self._latex(self.coord_names[0]))
         ax.set_ylabel(self._latex(self.coord_names[1]))
         ax.set_aspect(1)
