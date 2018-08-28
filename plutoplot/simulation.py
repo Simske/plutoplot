@@ -102,10 +102,14 @@ class Simulation:
         stop = self._index(stop)
         for i in range(start, stop+1, step):
             yield self._load_data(i)
-    
+
     def parallel_calc(self, func):
         with multiprocessing.Pool() as p:
             return np.array(p.map(func, self.memory_iter()))
+
+    def plot(self, *args, n: int=-1, **kwargs):
+        """Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()"""
+        self[-1].plot(*args, **kwargs)
 
     def __len__(self) -> int:
         return self.n
