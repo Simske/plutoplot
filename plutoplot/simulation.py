@@ -13,8 +13,9 @@ class Simulation:
     loads individual files when needed.
     Simulation is subscriptable and iterable.
     """
-    def __init__(self, wdir: str='', coordinates: str='cartesian'):
+    def __init__(self, wdir: str='', coordinates: str='cartesian', memory_save: bool=True):
         self.wdir = wdir
+        self._memory_save = memory_save
         try:
             self.read_vars()
         except FileNotFoundError:
@@ -69,7 +70,10 @@ class Simulation:
         Access individual data frames, returns them as PlutoData
         If file is already loaded, object is returned, otherwise data is loaded
         """
-        key = self._index(key)
+        # if saving not necessary
+        if self._memory_save:
+            return self._data[key]
+
         try:
             return self._data[key]
         except KeyError:
