@@ -1,6 +1,6 @@
 import os
 import multiprocessing
-from typing import Generator
+from typing import Generator, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 # local imports
@@ -134,3 +134,18 @@ Variables: {self.vars}"""
 
     def __repr__(self) -> str:
         return f"Simulation('{self.wdir}')"
+
+    def minmax(self, var: str='rho', range_: tuple=()) -> Tuple[float, float]:
+        """
+        Calculate minimum and maximum of var for sequence.
+        var: pluto variable name
+        range_: tuple of length <= 3, (start, stop, step) from memory_iter()
+        """
+        min_ = np.inf
+        max_ = -np.inf
+        for frame in self.memory_iter(*range_):
+            temp_min = np.min(getattr(frame, var))
+            temp_max = np.max(getattr(frame, var))
+            if temp_min < min_: min_ = temp_min
+            if temp_max > max_: max_ = temp_max
+        return min_, max_
