@@ -70,6 +70,7 @@ class Simulation:
         Access individual data frames, returns them as PlutoData
         If file is already loaded, object is returned, otherwise data is loaded
         """
+        key = self._index(key)
         # if saving not necessary
         if self._memory_save:
             return self._data[key]
