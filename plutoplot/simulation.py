@@ -71,9 +71,6 @@ class Simulation:
         If file is already loaded, object is returned, otherwise data is loaded
         """
         key = self._index(key)
-        # if saving not necessary
-        if self._memory_save:
-            return self._data[key]
 
         try:
             return self._data[key]
