@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
 
 class PlutoData:
     _coordinate_systems = {'cartesian': ['x', 'y', 'z'],
@@ -173,7 +174,9 @@ class PlutoData:
         ax.set_ylabel(self._latex(self.coord_names[1]))
         ax.set_aspect(1)
         if cbar:
-            plt.colorbar(im, label=self._latex(varname))
+            formatter = ScalarFormatter()
+            formatter.set_powerlimits((-2,2))
+            plt.colorbar(im, label=self._latex(varname), format=formatter)
 
     def __str__(self) -> None:
         return f"""PlutoData, wdir: '{self.wdir}'
