@@ -9,26 +9,22 @@ class PlutoData(object):
                           'polar': ['r', 'phi', 'z'],
                           'spherical': ['r', 'theta', 'phi']}
 
-    def __init__(self, n: int=-1, wdir: str="", coordinates: str='cartesian',
-                vars: tuple=None,
-                grid: tuple=None,
-                dims: list=None,
-                format: str='dbl'):
+    def __init__(self, n: int=-1, wdir: str="", format: str='dbl', coordinates: str='cartesian',
+                variables: dict=None, grid: dict=None, parent=None):
         """
         Read PLUTO output file
         n: output step number. Default: -1, uses last picture
         wdir: path to data directory
         coordinates: 'cartesian', 'cylindrical', 'polar', or 'spherical', only for names
 
-        Remaining arguments are for constructing object with preloaded data:
-        vars: tuple(list, int, float, float, int) = (vars, n, t, dt, nstep)
-        grid: tuple(list(numpy.array), list(numpy.array)) = ([xi], [dxi])
+        vars [dict]: variables for manual construction
+        parent [Simulation]: parent Simulation, missing attributes are tried to fetch from there
         """
         self.wdir = wdir
         self.data = {}
         self.format = format
         # Read all information in if object is not an child to Simulation
-        if vars is None:
+        if variables is None:
             # read info about data file
             self._read_vars(n)
 
@@ -43,20 +39,14 @@ class PlutoData(object):
 
         else:
             # construct object from preloaded information
-            # vars
-            self.vars, self.n, self.t, self.dt, self.nstep = vars
-            # coordinate names
-            self.coordinate_system = coordinates
-            self.coord_names = self._coordinate_systems[coordinates]
-            # grid
-            self.dims = dims
-            self.grid = grid
-
-            for i in range(len(grid[0])):
-                j = i + 1
-                setattr(self, f"x{j}", grid[0][i])
-                setattr(self, f"dx{j}", grid[1][i])
-                setattr(self, self.coord_names[i], getattr(self, f'x{j}'))
+            if variables and grid and parent:
+                self.grid = grid
+                for key, value in variables.items():
+                    setattr(self, key, value)
+                self.parent = parent
+            else:
+                raise Exception('For PlutoData construction from preloaded information, '
+                                'variables, grid and parent have to be provided')
 
     def __getattribute__(self, name):
         """Get grid/data attributes from corresponding dict, or load it"""
@@ -69,7 +59,7 @@ class PlutoData(object):
         # grid
         try:
             return self.grid[name]
-        except:
+        except KeyError:
             pass
 
         # data
@@ -79,8 +69,14 @@ class PlutoData(object):
             if name in self.vars:
                 self._load_var(name)
                 return self.data[name]
+
+        # parent
+        try:
+            return getattr(self.parent, name)
+        except AttributeError:
+            pass
         
-        raise AttributeError(f"Plutoplot has no attribute '{name}'")
+        raise AttributeError(f"{type(self)} has no attribute '{name}'")
 
     def _read_vars(self, n: int=-1) -> None:
         """Read simulation step data and written variables"""
@@ -93,6 +89,7 @@ class PlutoData(object):
             # save/tranform into wanted variables
             n, t, dt, nstep, file_mode, endianness, *self.vars = lines[n].split()
             self.n, self.t, self.dt, self.nstep = int(n), float(t), float(dt), int(nstep)
+
             if file_mode == 'single_file':
                 self._file_mode = 'single'
             elif file_mode == 'multiple_files':

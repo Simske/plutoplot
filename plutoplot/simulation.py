@@ -13,9 +13,9 @@ class Simulation:
     loads individual files when needed.
     Simulation is subscriptable and iterable.
     """
-    def __init__(self, wdir: str='', coordinates: str='cartesian', memory_save: bool=True):
+    def __init__(self, wdir: str='', format='dbl', coordinates: str='cartesian'):
         self.wdir = wdir
-        self._memory_save = memory_save
+        self.format = format
         try:
             self.read_vars()
         except FileNotFoundError:
@@ -33,6 +33,26 @@ class Simulation:
         # dict for individual data frames
         self._data = {}
 
+    def __getattribute__(self, name):
+        # normal attributes
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            pass
+
+        # grid
+        try:
+            return self.grid[name]
+        except:
+            pass
+
+        # vars
+        if name in self.vars:
+            return getattr(self[-1], name)
+        
+        raise AttributeError(f"{type(self)} has no attribute '{name}'")
+
+
     def read_vars(self) -> None:
         """Read simulation step data and written variables"""
         with open(os.path.join(self.wdir, 'dbl.out'), 'r') as f:
@@ -42,12 +62,22 @@ class Simulation:
             self.t = np.empty(self.n, float)
             self.dt = np.empty(self.n, float)
             self.nstep = np.empty(self.n, int)
-
-            self.vars = lines[0].split()[6:]
+            # information for all steps the same
+            file_mode, endianness, *self.vars = lines[0].split()[4:]
 
             for i, line in enumerate(lines):
-                split = line.split()
-                self.t[i], self.dt[i], self.nstep[i] = split[1:4]
+                self.t[i], self.dt[i], self.nstep[i] = line.split()[1:4]
+
+            if file_mode == 'single_file':
+                self._file_mode = 'single'
+            elif file_mode == 'multiple_files':
+                self._file_mode = 'multiple'
+
+            # format of binary files
+            if self.format in ['dbl', 'flt']:
+                self.charsize = 8 if self.format == 'dbl' else 4
+                endianness = '<' if endianness == 'little' else '>'
+                self._binformat = f"{endianness}f{self.charsize}"
 
 
     # Use read_grid() from PlutoData object
@@ -83,10 +113,10 @@ class Simulation:
         """Load data frame"""
         key = self._index(key)
 
-        D = PlutoData(wdir=self.wdir, coordinates=self.coordinate_system,
-                      vars=(self.vars, key, self.t[key], self.dt[key], self.nstep[key]),
-                      grid=self.grid,
-                      dims=self.dims)
+        D = PlutoData(wdir=self.wdir, coordinates=self.coordinate_system, format=self.format, grid=self.grid,
+                      variables={'vars': self.vars, 'n':key, 't': self.t[key], 'dt': self.dt[key],
+                      'nstep': self.nstep[key]},
+                      parent=self)
 
         return D
 
@@ -111,7 +141,7 @@ class Simulation:
 
     def plot(self, *args, n: int=-1, **kwargs):
         """Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()"""
-        self[-1].plot(*args, **kwargs)
+        self[n].plot(*args, **kwargs)
 
     def __len__(self) -> int:
         return self.n
