@@ -2,8 +2,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
-# local imports
-from .utils import load_binary
 
 class PlutoData(object):
     _coordinate_systems = {'cartesian': ['x', 'y', 'z'],
@@ -61,6 +59,7 @@ class PlutoData(object):
                 setattr(self, self.coord_names[i], getattr(self, f'x{j}'))
 
     def __getattribute__(self, name):
+        """Get grid/data attributes from corresponding dict, or load it"""
         # normal attributes
         try:
             return object.__getattribute__(self, name)
@@ -77,8 +76,11 @@ class PlutoData(object):
         try:
             return self.data[name]
         except KeyError:
-            self._load_var(name)
-            return self.data[name]
+            if name in self.vars:
+                self._load_var(name)
+                return self.data[name]
+        
+        raise AttributeError(f"Plutoplot has no attribute '{name}'")
 
     def _read_vars(self, n: int=-1) -> None:
         """Read simulation step data and written variables"""
@@ -88,6 +90,7 @@ class PlutoData(object):
             if n == -1:
                 n = int(lines[-1].split()[0])
 
+            # save/tranform into wanted variables
             n, t, dt, nstep, file_mode, endianness, *self.vars = lines[n].split()
             self.n, self.t, self.dt, self.nstep = int(n), float(t), float(dt), int(nstep)
             if file_mode == 'single_file':
@@ -95,6 +98,7 @@ class PlutoData(object):
             elif file_mode == 'multiple_files':
                 self._file_mode = 'multiple'
 
+            # format of binary files
             if self.format in ['dbl', 'flt']:
                 self.charsize = 8 if self.format == 'dbl' else 4
                 endianness = '<' if endianness == 'little' else '>'
@@ -142,68 +146,25 @@ class PlutoData(object):
             self.shape.append(self.dims[1])
         if self.dims[2] > 1:
             self.shape.append(self.dims[2])
-        
+
         self.size = 1
         for dim in self.dims: self.size *= dim
 
     def _load_var(self, var):
+        """Load data for var into memory. Read either var dbl file (multiple_files mode),
+        or, slice data from single dbl file"""
         if self._file_mode == 'single':
             filename = f"data.{self.n:04d}.{self.format}"
+            # byte offset of variable in dbl file
             offset = self.charsize * self.size * self.vars.index(var)
         elif self._file_mode == 'multiple':
             filename = f"{var}.{self.n:04d}.{self.format}"
             offset = 0
-        
-        print(offset)
-        
+                
         with open(os.path.join(self.wdir, filename), 'rb') as f:
             f.seek(offset)
             shape = tuple(reversed(self.shape))
             self.data[var] = np.fromfile(f, dtype=self._binformat, count=self.size).reshape(shape).T
-
-
-    def read_data_single(self) -> None:
-        """
-        Read actual data file. Requires information from read_vars(), read_grid()
-        (which are run by __init__)
-        """
-        # load binary file into 1d-array
-        raw = np.fromfile(os.path.join(self.wdir, f"data.{self.n:04d}.dbl"), dtype=f'{self._endianness}f8')
-        # seperate variables
-        shaped = raw.reshape(len(self.vars), -1)
-        # determine shape of data array, depending on used dimensions and resolution
-        newshape = []
-        if self.dims[2] > 1:
-            newshape.append(self.dims[2])
-        if self.dims[1] > 1:
-            newshape.append(self.dims[1])
-        if self.dims[0] > 1:
-            newshape.append(self.dims[0])
-
-        self.data = {}
-        # reshape data and save them under varname
-        for i, var in enumerate(self.vars):
-            self.data[var] = shaped[i].reshape(newshape).T
-            if var[0] == 'v':
-                new_name = f"v{self.coord_names[int(var[2])-1]}"
-                self.data[new_name] = self.data[var]
-
-    def read_data_multiple(self, var):
-        """Read dbl datafile for single variable var"""
-        # read raw data
-        raw = np.fromfile(os.path.join(self.wdir, f"{var}.{self.n:04d}.dbl"), dtype=f'{self._endianness}f8')
-        # determine shape of data array, depending on used dimensions and resolution
-        newshape = []
-        if self.dims[2] > 1:
-            newshape.append(self.dims[2])
-        if self.dims[1] > 1:
-            newshape.append(self.dims[1])
-        if self.dims[0] > 1:
-            newshape.append(self.dims[0])
-
-        self.data[var] = load_binary(os.path.join(self.wdir, f"{var}.{self.n:04d}.dbl"),
-                           newshape).T
-        # return raw.reshape(newshape).T
 
     def __getitem__(self, var: str) -> np.ndarray:
         return self.data[var]
