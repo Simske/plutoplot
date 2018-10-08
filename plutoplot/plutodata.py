@@ -2,8 +2,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
+# local imports
+from .utils import load_binary
 
-class PlutoData:
+class PlutoData(object):
     _coordinate_systems = {'cartesian': ['x', 'y', 'z'],
                           'cylindrical': ['R', 'z'],
                           'polar': ['r', 'phi', 'z'],
@@ -12,7 +14,8 @@ class PlutoData:
     def __init__(self, n: int=-1, wdir: str="", coordinates: str='cartesian',
                 vars: tuple=None,
                 grid: tuple=None,
-                dims: list=None):
+                dims: list=None,
+                format: str='dbl'):
         """
         Read PLUTO output file
         n: output step number. Default: -1, uses last picture
@@ -24,10 +27,12 @@ class PlutoData:
         grid: tuple(list(numpy.array), list(numpy.array)) = ([xi], [dxi])
         """
         self.wdir = wdir
+        self.data = {}
+        self.format = format
         # Read all information in if object is not an child to Simulation
         if vars is None:
             # read info about data file
-            self.read_vars(n)
+            self._read_vars(n)
 
             try:
                 self.coordinate_system = coordinates
@@ -36,9 +41,7 @@ class PlutoData:
                 raise KeyError('Coordinate system not recognized')
 
             # read grid data
-            self.read_grid()
-            # read data
-            self.read_data()
+            self._read_grid()
 
         else:
             # construct object from preloaded information
@@ -57,24 +60,49 @@ class PlutoData:
                 setattr(self, f"dx{j}", grid[1][i])
                 setattr(self, self.coord_names[i], getattr(self, f'x{j}'))
 
-            self.read_data()
+    def __getattribute__(self, name):
+        # normal attributes
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            pass
 
+        # grid
+        try:
+            return self.grid[name]
+        except:
+            pass
 
-    def read_vars(self, n: int=-1) -> None:
+        # data
+        try:
+            return self.data[name]
+        except KeyError:
+            self._load_var(name)
+            return self.data[name]
+
+    def _read_vars(self, n: int=-1) -> None:
         """Read simulation step data and written variables"""
-        with open(os.path.join(self.wdir, 'dbl.out'), 'r') as f:
+        with open(os.path.join(self.wdir, f'{self.format}.out'), 'r') as f:
             lines = f.readlines()
             # find last saved step
             if n == -1:
                 n = int(lines[-1].split()[0])
 
-            n, t, dt, nstep, _, _, *self.vars = lines[n].split()
+            n, t, dt, nstep, file_mode, endianness, *self.vars = lines[n].split()
             self.n, self.t, self.dt, self.nstep = int(n), float(t), float(dt), int(nstep)
+            if file_mode == 'single_file':
+                self._file_mode = 'single'
+            elif file_mode == 'multiple_files':
+                self._file_mode = 'multiple'
 
-    def read_grid(self) -> None:
+            if self.format in ['dbl', 'flt']:
+                self.charsize = 8 if self.format == 'dbl' else 4
+                endianness = '<' if endianness == 'little' else '>'
+                self._binformat = f"{endianness}f{self.charsize}"
+
+    def _read_grid(self) -> None:
         """
         Read PLUTO gridfile and calculate center of cells
-        wdir: Data directory, if empty object data directory is used
         """
         x = []
         self.dims = []
@@ -98,21 +126,49 @@ class PlutoData:
                     # calculate center of cell, and difference between cells
                     x.append((np.sum(data[:, 1:], axis=1)/2, data[:, 2] - data[:, 1]))
 
-        self.grid = ([], [])
+        # save in grid datastructure
+        self.grid = {}
         for i, (xn, coord_name) in enumerate(zip(x, self.coord_names), start=1):
-            setattr(self, f"x{i}", xn[0])
-            setattr(self, f"dx{i}", xn[1])
-            self.grid[0].append(getattr(self, f"x{i}"))
-            self.grid[1].append(getattr(self, f"dx{i}"))
-            setattr(self, coord_name, getattr(self, f'x{i}'))
+            self.grid[f"x{i}"] = xn[0]
+            self.grid[f"dx{i}"] = xn[1]
+            self.grid[coord_name] = self.grid[f"x{i}"]
+            self.grid[f"d{coord_name}"] = self.grid[f"dx{i}"]
+        
+        # find shape of data
+        self.shape = []
+        if self.dims[0] > 1:
+            self.shape.append(self.dims[0])
+        if self.dims[1] > 1:
+            self.shape.append(self.dims[1])
+        if self.dims[2] > 1:
+            self.shape.append(self.dims[2])
+        
+        self.size = 1
+        for dim in self.dims: self.size *= dim
 
-    def read_data(self) -> None:
+    def _load_var(self, var):
+        if self._file_mode == 'single':
+            filename = f"data.{self.n:04d}.{self.format}"
+            offset = self.charsize * self.size * self.vars.index(var)
+        elif self._file_mode == 'multiple':
+            filename = f"{var}.{self.n:04d}.{self.format}"
+            offset = 0
+        
+        print(offset)
+        
+        with open(os.path.join(self.wdir, filename), 'rb') as f:
+            f.seek(offset)
+            shape = tuple(reversed(self.shape))
+            self.data[var] = np.fromfile(f, dtype=self._binformat, count=self.size).reshape(shape).T
+
+
+    def read_data_single(self) -> None:
         """
         Read actual data file. Requires information from read_vars(), read_grid()
         (which are run by __init__)
         """
         # load binary file into 1d-array
-        raw = np.fromfile(os.path.join(self.wdir, f"data.{self.n:04d}.dbl"), dtype='<f8')
+        raw = np.fromfile(os.path.join(self.wdir, f"data.{self.n:04d}.dbl"), dtype=f'{self._endianness}f8')
         # seperate variables
         shaped = raw.reshape(len(self.vars), -1)
         # determine shape of data array, depending on used dimensions and resolution
@@ -128,11 +184,26 @@ class PlutoData:
         # reshape data and save them under varname
         for i, var in enumerate(self.vars):
             self.data[var] = shaped[i].reshape(newshape).T
-            setattr(self, var, self.data[var])
             if var[0] == 'v':
                 new_name = f"v{self.coord_names[int(var[2])-1]}"
                 self.data[new_name] = self.data[var]
-                setattr(self, new_name, self.data[var])
+
+    def read_data_multiple(self, var):
+        """Read dbl datafile for single variable var"""
+        # read raw data
+        raw = np.fromfile(os.path.join(self.wdir, f"{var}.{self.n:04d}.dbl"), dtype=f'{self._endianness}f8')
+        # determine shape of data array, depending on used dimensions and resolution
+        newshape = []
+        if self.dims[2] > 1:
+            newshape.append(self.dims[2])
+        if self.dims[1] > 1:
+            newshape.append(self.dims[1])
+        if self.dims[0] > 1:
+            newshape.append(self.dims[0])
+
+        self.data[var] = load_binary(os.path.join(self.wdir, f"{var}.{self.n:04d}.dbl"),
+                           newshape).T
+        # return raw.reshape(newshape).T
 
     def __getitem__(self, var: str) -> np.ndarray:
         return self.data[var]

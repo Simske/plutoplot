@@ -51,7 +51,7 @@ class Simulation:
 
 
     # Use read_grid() from PlutoData object
-    read_grid = PlutoData.read_grid
+    read_grid = PlutoData._read_grid
 
     def _index(self, key: int) -> int:
         """Check if index is in range and implements negative indexing"""
