@@ -1,7 +1,9 @@
 from setuptools import setup
+from plutoplot import __version__
+
 setup(
     name="plutoplot",
-    version="0.1",
+    version=__version__,
     packages=['plutoplot'],
     install_requires=[
         'numpy',
