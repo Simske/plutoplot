@@ -20,11 +20,11 @@ class PlutoData(object):
         vars [dict]: variables for manual construction
         parent [Simulation]: parent Simulation, missing attributes are tried to fetch from there
         """
-        self.wdir = wdir
         self.data = {}
         self.format = format
         # Read all information in if object is not an child to Simulation
-        if variables is None:
+        if parent is None:
+            self.wdir = wdir
             # read info about data file
             self._read_vars(n)
 
@@ -38,15 +38,11 @@ class PlutoData(object):
             self._read_grid()
 
         else:
-            # construct object from preloaded information
-            if variables and grid and parent:
-                self.grid = grid
-                for key, value in variables.items():
-                    setattr(self, key, value)
-                self.parent = parent
-            else:
-                raise Exception('For PlutoData construction from preloaded information, '
-                                'variables, grid and parent have to be provided')
+            # construct object from parent simulation
+            self.parent = parent
+            self.wdir, self.grid, self.vars = parent.wdir, parent.grid, parent.vars
+            self.n, self.t, self.dt, self.nstep = n, parent.t[n], parent.dt[n], parent.nstep[n]
+
 
     def __getattribute__(self, name):
         """Get grid/data attributes from corresponding dict, or load it"""
@@ -55,10 +51,9 @@ class PlutoData(object):
             return object.__getattribute__(self, name)
         except AttributeError:
             pass
-
         # grid
         try:
-            return self.grid[name]
+            return object.__getattribute__(self, 'grid')[name]
         except KeyError:
             pass
 

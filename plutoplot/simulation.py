@@ -42,8 +42,8 @@ class Simulation:
 
         # grid
         try:
-            return self.grid[name]
-        except:
+            return object.__getattribute__(self, 'grid')[name]
+        except KeyError:
             pass
 
         # vars
@@ -113,12 +113,7 @@ class Simulation:
         """Load data frame"""
         key = self._index(key)
 
-        D = PlutoData(wdir=self.wdir, coordinates=self.coordinate_system, format=self.format, grid=self.grid,
-                      variables={'vars': self.vars, 'n':key, 't': self.t[key], 'dt': self.dt[key],
-                      'nstep': self.nstep[key]},
-                      parent=self)
-
-        return D
+        return PlutoData(n=key, parent=self)
 
     def __iter__(self) -> Generator[PlutoData, None, None]:
         """Iterate over all data frames"""
