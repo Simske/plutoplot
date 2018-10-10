@@ -44,13 +44,9 @@ class PlutoData(object):
             self.n, self.t, self.dt, self.nstep = n, parent.t[n], parent.dt[n], parent.nstep[n]
 
 
-    def __getattribute__(self, name):
+    def __getattr__(self, name):
         """Get grid/data attributes from corresponding dict, or load it"""
         # normal attributes
-        try:
-            return object.__getattribute__(self, name)
-        except AttributeError:
-            pass
         # grid
         try:
             return object.__getattribute__(self, 'grid')[name]

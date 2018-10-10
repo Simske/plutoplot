@@ -33,13 +33,7 @@ class Simulation:
         # dict for individual data frames
         self._data = {}
 
-    def __getattribute__(self, name):
-        # normal attributes
-        try:
-            return object.__getattribute__(self, name)
-        except AttributeError:
-            pass
-
+    def __getattr__(self, name):
         # grid
         try:
             return object.__getattribute__(self, 'grid')[name]
