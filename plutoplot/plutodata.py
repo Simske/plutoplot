@@ -66,7 +66,7 @@ class PlutoData(object):
             return getattr(self.parent, name)
         except AttributeError:
             pass
-        
+
         raise AttributeError(f"{type(self)} has no attribute '{name}'")
 
     def _read_vars(self, n: int=-1) -> None:
@@ -125,7 +125,7 @@ class PlutoData(object):
             self.grid[f"dx{i}"] = xn[1]
             self.grid[coord_name] = self.grid[f"x{i}"]
             self.grid[f"d{coord_name}"] = self.grid[f"dx{i}"]
-        
+
         # find shape of data
         self.shape = []
         if self.dims[0] > 1:
@@ -148,7 +148,7 @@ class PlutoData(object):
         elif self._file_mode == 'multiple':
             filename = f"{var}.{self.n:04d}.{self.format}"
             offset = 0
-                
+
         with open(os.path.join(self.wdir, filename), 'rb') as f:
             f.seek(offset)
             shape = tuple(reversed(self.shape))
@@ -208,3 +208,6 @@ Variables: {self.vars}"""
     def __repr__(self) -> None:
         return f"PlutoData({self.n}, wdir='{self.wdir}'" + \
                 (f", coordinates='{self.coordinate_system}'" if self.coordinate_system != 'cartesian' else "") + ")"
+
+    def __dir__(self) -> list:
+        return object.__dir__(self) + self.vars + list(self.grid.keys())

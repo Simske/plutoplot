@@ -43,7 +43,7 @@ class Simulation:
         # vars
         if name in self.vars:
             return getattr(self[-1], name)
-        
+
         raise AttributeError(f"{type(self)} has no attribute '{name}'")
 
 
@@ -151,6 +151,9 @@ Variables: {self.vars}"""
 
     def __repr__(self) -> str:
         return f"Simulation('{self.wdir}')"
+
+    def __dir__(self) -> list:
+        return object.__dir__(self) + self.vars + list(self.grid.keys())
 
     def minmax(self, var: str='rho', range_: tuple=()) -> Tuple[float, float]:
         """
