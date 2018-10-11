@@ -1,10 +1,13 @@
 import os
 import multiprocessing
+import warnings
 from typing import Generator, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 # local imports
 from .plutodata import PlutoData
+
+warnings.simplefilter("always")
 
 class Simulation:
     """
@@ -111,22 +114,33 @@ class Simulation:
 
     def __iter__(self) -> Generator[PlutoData, None, None]:
         """Iterate over all data frames"""
-        for i in range(self.n):
-            yield self[i]
+        return self.iter()
 
-    def memory_iter(self, start=0, stop=-1, step=1) -> Generator[PlutoData, None, None]:
+    def iter(self, start: int=0, stop: int=None, step: int=1, memory_keep: bool=False) -> Generator[PlutoData, None, None]:
         """
-        Iterate over all data frames, deleting each after loop
-        Takes arguments for start, stop, step
+        Iterate over data frames in range, (or all).
+        start, stop, step [int]: works like range (start inclusive, stop exclusive)
+        memory_keep [bool]: whether object should be kept in memory
         """
         start = self._index(start)
-        stop = self._index(stop)
-        for i in range(start, stop+1, step):
-            yield self._load_data(i)
+        stop = len(self) if stop is None else self._index(stop)
+        if memory_keep:
+            for i in range(start, stop, step):
+                yield self[i]
+        else:
+            for i in range(start, stop, step):
+                yield self._load_data(i)
+
+    def memory_iter(self, start=0, stop=-1, step=1) -> Generator[PlutoData, None, None]:
+        """Deprecated, use Simulation.iter() instead"""
+        warnings.warn(
+            "plutoplot.Simulation.memory_iter() is deprecated, use plutoplot.Simulation.iter()",
+            DeprecationWarning)
+        return self.iter()
 
     def parallel_calc(self, func):
         with multiprocessing.Pool() as p:
-            return np.array(p.map(func, self.memory_iter()))
+            return np.array(p.map(func, self.iter()))
 
     def plot(self, *args, n: int=-1, **kwargs):
         """Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()"""
@@ -159,11 +173,11 @@ Variables: {self.vars}"""
         """
         Calculate minimum and maximum of var for sequence.
         var: pluto variable name
-        range_: tuple of length <= 3, (start, stop, step) from memory_iter()
+        range_: tuple of length <= 3, (start, stop, step) from iter()
         """
         min_ = np.inf
         max_ = -np.inf
-        for frame in self.memory_iter(*range_):
+        for frame in self.iter(*range_):
             temp_min = np.min(getattr(frame, var))
             temp_max = np.max(getattr(frame, var))
             if temp_min < min_: min_ = temp_min
