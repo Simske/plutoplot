@@ -1,10 +1,13 @@
-import matplotlib.pyplot as plt
 import multiprocessing
 import os
 import subprocess
+
+import matplotlib.pyplot as plt
+
 # local imports
 from .plutodata import PlutoData
 from .simulation import Simulation
+
 
 def parameter_generator(sim: Simulation, plot_func, output_path,
                         plot_args: dict={'vmin': None, 'vmax': None},
@@ -16,6 +19,7 @@ def generate_frame(sim, i, plot_func, output_path, plot_args, save_args):
     fig = plot_func(sim[i], **plot_args)
     fig.savefig(f"{output_path}{i:04d}.png", **save_args)
     plt.close(fig)
+    del sim[i]
 
 def render_frames_parallel(sim: Simulation, plot_func, output_path: str='',
                   plot_args: dict={'vmin': None, 'vmax': None},
