@@ -189,9 +189,19 @@ class PlutoData(object):
             self.fig, self.ax = plt.subplots(figsize=figsize)
             ax = self.ax
 
-        im = ax.pcolormesh(self.x1, self.x2, var.T, vmin=vmin, vmax=vmax, cmap=cmap)
-        ax.set_xlabel(self._latex(self.coord_names[0]))
-        ax.set_ylabel(self._latex(self.coord_names[1]))
+        if self.coordinate_system == 'spherical':
+            R, THETA = np.meshgrid(self.r, self.theta)
+            X = R * np.sin(THETA)
+            Y = R * np.cos(THETA)
+            ax.set_xlabel(self._latex('$x$'))
+            ax.set_ylabel(self._latex('$y$'))
+        else:
+            X, Y = self.x1, self.x2
+            ax.set_xlabel(self._latex(self.coord_names[0]))
+            ax.set_ylabel(self._latex(self.coord_names[1]))
+
+
+        im = ax.pcolormesh(X, Y, var.T, vmin=vmin, vmax=vmax, cmap=cmap)
         ax.set_aspect(1)
         if cbar:
             formatter = ScalarFormatter()
