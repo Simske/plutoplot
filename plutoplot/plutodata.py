@@ -201,7 +201,7 @@ class PlutoData(object):
             X = R * np.sin(THETA)
             Y = R * np.cos(THETA)
             ax.set_xlabel(self._latex('$x$'))
-            ax.set_ylabel(self._latex('$y$'))
+            ax.set_ylabel(self._latex('$z$'))
         else:
             X, Y = self.x1, self.x2
             ax.set_xlabel(self._latex(self.coord_names[0]))
