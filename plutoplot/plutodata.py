@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 class PlutoData(object):
     _coordinate_systems = {'cartesian': ['x', 'y', 'z'],
@@ -176,7 +177,7 @@ class PlutoData(object):
         except KeyError:
             return coord
 
-    def plot(self, var=None, ax=None, figsize=(10, 10), cbar=True, vmin=None, vmax=None, cmap=None) -> None:
+    def plot(self, var=None, ax=None, figsize=None, cbar=True, vmin=None, vmax=None, cmap=None) -> None:
         """Simple colorplot for 2-dim data"""
         if var is None:
             var = self.vars[0]
@@ -185,7 +186,13 @@ class PlutoData(object):
             var = getattr(self, var)
         else:
             varname = None
+
+
         if ax is None:
+            if figsize is None:
+                x_size = 6.4
+                y_size = x_size * self.dims[1] / self.dims[0] / 1.1
+                figsize = (x_size, y_size)
             self.fig, self.ax = plt.subplots(figsize=figsize)
             ax = self.ax
 
@@ -206,7 +213,9 @@ class PlutoData(object):
         if cbar:
             formatter = ScalarFormatter()
             formatter.set_powerlimits((-2,2))
-            plt.colorbar(im, label=self._latex(varname), format=formatter)
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="10%", pad=0.05)
+            plt.colorbar(im, label=self._latex(varname), format=formatter, cax=cax)
 
     def __str__(self) -> None:
         return f"""PlutoData, wdir: '{self.wdir}'
