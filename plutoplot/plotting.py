@@ -1,38 +1,37 @@
-import multiprocessing
-import os
-import subprocess
-
+import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-# local imports
-from .plutodata import PlutoData
-from .simulation import Simulation
+from .io import Grid
 
+def plot(data: np.ndarray, grid: Grid, ax=None, label: str=None, figsize=None,
+         cbar=True, vmin=None, vmax=None, cmap=None, projection: bool=True) -> None:
+        """Simple colorplot for 2-dim data"""
 
-def parameter_generator(sim: Simulation, plot_func, output_path,
-                        plot_args: dict={'vmin': None, 'vmax': None},
-                        save_args: dict={'bbox_inches': 'tight'}):
-    for i in range(sim.n):
-        yield (sim, i, plot_func, output_path, plot_args, save_args)
+        if ax is None:
+            if figsize is None:
+                x_size = 6.4
+                y_size = x_size * grid.dims[1] / grid.dims[0] / 1.1
+                figsize = (x_size, y_size)
+            fig, ax = plt.subplots(figsize=figsize)
+        
+        if projection:
+            X, Y = grid.mesh()
+            ax.set_xlabel('$x$')
+            ax.set_ylabel('$y$')
+        else:
+            X, Y = grid.x1, grid.x2
+            ax.set_xlabel(f"${grid.mappings_tex['x1']}$")
+            ax.set_ylabel(f"${grid.mappings_tex['x2']}$")
 
-def generate_frame(sim, i, plot_func, output_path, plot_args, save_args):
-    fig = plot_func(sim[i], **plot_args)
-    fig.savefig(f"{output_path}{i:04d}.png", **save_args)
-    plt.close(fig)
-    del sim[i]
-
-def render_frames_parallel(sim: Simulation, plot_func, output_path: str='',
-                  plot_args: dict={'vmin': None, 'vmax': None},
-                  save_args: dict={'bbox_inches': 'tight'}):
-    with multiprocessing.Pool() as p:
-        p.starmap(generate_frame, parameter_generator(sim, plot_func, output_path,
-                        plot_args, save_args))
-
-def generate_animation(sim: Simulation, plot_func, output_name: str='animation.mp4',
-                  framerate: int=25,
-                  plot_args: dict={'vmin': None, 'vmax': None},
-                  save_args: dict={'bbox_inches': 'tight'}):
-    os.mkdir('tmp')
-    render_frames_parallel(sim, plot_func, 'tmp/', plot_args, save_args)
-    subprocess.run(['ffmpeg', '-framerate', f'{framerate:d}', '-i', 'tmp/%04d.png', output_name])
-    subprocess.run(['rm', '-r', 'tmp'])
+        im = ax.pcolormesh(X, Y, data.T, vmin=vmin, vmax=vmax, cmap=cmap)
+        ax.set_aspect(1)
+        if cbar:
+            formatter = ScalarFormatter()
+            formatter.set_powerlimits((-2,2))
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="10%", pad=0.05)
+            plt.colorbar(im, label=label, format=formatter, cax=cax)
+        
+        return fig, ax

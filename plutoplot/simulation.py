@@ -1,4 +1,5 @@
 import os
+from os.path import join
 import multiprocessing
 import warnings
 from typing import Generator, Tuple
@@ -6,8 +7,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 # local imports
 from .plutodata import PlutoData
+from .io import Grid, Pluto_ini, Definitions_h, SimulationMetadata
+from .coordinates import generate_coord_mapping, generate_tex_mapping
 
-warnings.simplefilter("always")
+# warnings.simplefilter("always")
 
 class Simulation:
     """
@@ -16,69 +19,92 @@ class Simulation:
     loads individual files when needed.
     Simulation is subscriptable and iterable.
     """
-    def __init__(self, wdir: str='', format='dbl', coordinates: str='cartesian'):
-        self.wdir = wdir
-        self.format = format
-        try:
-            self.read_vars()
-        except FileNotFoundError:
-            self.wdir = os.path.join(wdir, 'data')
-            self.read_vars()
+    supported_formats = ('dbl', 'flt')
 
-        try:
-            self.coordinate_system = coordinates
-            self.coord_names = PlutoData._coordinate_systems[coordinates]
-        except KeyError:
-            raise KeyError('Coordinate system not recognized')
+    def __init__(self, sim_dir: str='', format: str=None, coordinates: str=None):
+        self.sim_dir = sim_dir
+        if os.path.exists(join(sim_dir, 'grid.out')):
+            self.data_dir = sim_dir
+        elif os.path.exists(join(sim_dir, 'data', 'grid.out')):
+            self.data_dir = join(sim_dir, 'data')
+        elif os.path.exists(join(sim_dir, self.ini['Static Grid Output']['output_dir'], 'grid.out')):
+            self.data_dir = join(join(sim_dir, self.ini['Static Grid Output']['output_dir']))
+        else:
+            raise FileNotFoundError("Gridfile not found")
 
-        self.read_grid()
+        self.grid = Grid(join(self.data_dir, 'grid.out'))
+
+        if format is None:
+            for f in self.supported_formats:
+                if os.path.exists(join(self.data_dir, f'{f}.out')):
+                    self.format = f
+                    break
+            try:
+                self.format
+            except AttributeError:
+                raise FileNotFoundError(f'No Metadata file for formats {self.supported_formats} found in {self.data_dir}')
+        else:
+            if format not in self.supported_formats:
+                raise NotImplementedError(f"Format '{format}' not supported")
+            if os.path.exists(join(self.data_dir, f'{format}.out')):
+                self.format = format
+            else:
+                raise FileNotFoundError(f"Metadata file {join(self.data_dir, f'{format}.out')} for format {format} not found")
+
+        self.metadata = SimulationMetadata(join(self.data_dir, f'{self.format}.out'), self.format)
+        self.vars = self.metadata.vars
+
+        if coordinates is None:
+            coordinates = 'cartesian'
+
+        self.grid.set_coordinate_system(coordinates,
+                                        mappings=generate_coord_mapping(coordinates),
+                                        mappings_tex=generate_tex_mapping(coordinates))
 
         # dict for individual data frames
         self._data = {}
 
-    def __getattr__(self, name):
-        # grid
+    @property
+    def ini(self):
         try:
-            return object.__getattribute__(self, 'grid')[name]
+            return self._ini
+        except AttributeError:
+            self._ini = Pluto_ini(join(self.sim_dir, 'pluto.ini'))
+            return self._ini
+    
+    @property
+    def definitions(self):
+        try:
+            return self._definitions
+        except AttributeError:
+            self._definitions = Definitions_h(join(self.sim_dir, 'definitions.h'))
+
+    def __getattr__(self, name):
+        metadata = object.__getattribute__(self, 'metadata')
+        # metadata
+        try:
+            return getattr(metadata, name)
+        except:
+            pass
+
+        # grid
+        grid = object.__getattribute__(self, 'grid')
+        try:
+            return getattr(grid, name)
+        except AttributeError:
+            pass
+        try:
+            return getattr(grid, self.mappings[name])
         except KeyError:
             pass
 
         # vars
-        if name in self.vars:
-            return getattr(self[-1], name)
+        try:
+            return object.__getattribute__(self[-1], name)
+        except AttributeError:
+            pass
 
         raise AttributeError(f"{type(self)} has no attribute '{name}'")
-
-
-    def read_vars(self) -> None:
-        """Read simulation step data and written variables"""
-        with open(os.path.join(self.wdir, 'dbl.out'), 'r') as f:
-            lines = f.readlines()
-            self.n = len(lines)
-            # prepare arrays
-            self.t = np.empty(self.n, float)
-            self.dt = np.empty(self.n, float)
-            self.nstep = np.empty(self.n, int)
-            # information for all steps the same
-            file_mode, endianness, *self.vars = lines[0].split()[4:]
-
-            for i, line in enumerate(lines):
-                self.t[i], self.dt[i], self.nstep[i] = line.split()[1:4]
-
-            if file_mode == 'single_file':
-                self._file_mode = 'single'
-            elif file_mode == 'multiple_files':
-                self._file_mode = 'multiple'
-
-            # format of binary files
-            if self.format in ['dbl', 'flt']:
-                self.charsize = 8 if self.format == 'dbl' else 4
-                endianness = '<' if endianness == 'little' else '>'
-                self._binformat = f"{endianness}f{self.charsize}"
-
-
-    # Use read_grid() from PlutoData object
-    read_grid = PlutoData._read_grid
 
     def _index(self, key: int) -> int:
         """Check if index is in range and implements negative indexing"""
@@ -94,7 +120,7 @@ class Simulation:
 
     def __getitem__(self, key: int) -> PlutoData:
         """
-        Access individual data frames, returns them as PlutoData
+        Access individual data frames, return them as PlutoData
         If file is already loaded, object is returned, otherwise data is loaded
         """
         key = self._index(key)
@@ -108,9 +134,7 @@ class Simulation:
 
     def _load_data(self, key: int) -> PlutoData:
         """Load data frame"""
-        key = self._index(key)
-
-        return PlutoData(n=key, parent=self)
+        return PlutoData(n=self._index(key), simulation=self)
 
     def __iter__(self) -> Generator[PlutoData, None, None]:
         """Iterate over all data frames"""
@@ -138,7 +162,13 @@ class Simulation:
             DeprecationWarning)
         return self.iter()
 
-    def parallel_calc(self, func):
+    def reduce(self, func):
+        result = np.empty()
+        for i, d in enumerate(self):
+            result[i] = func(d)
+
+
+    def reduce_parallel(self, func):
         with multiprocessing.Pool() as p:
             return np.array(p.map(func, self.iter()))
 
@@ -158,16 +188,17 @@ class Simulation:
         self._data.clear()
 
     def __str__(self) -> str:
-        return f"""PLUTO simulation, wdir: '{self.wdir}'
+        return f"""PLUTO simulation, sim_dir: '{self.sim_dir}',
+        data_dir: '{self.data_dir}'
 resolution: {self.dims}, {self.coordinate_system} coordinates
 data files: {self.n}, last time: {self.t[-1]}
 Variables: {self.vars}"""
 
     def __repr__(self) -> str:
-        return f"Simulation('{self.wdir}')"
+        return f"Simulation('{self.sim_dir}')"
 
     def __dir__(self) -> list:
-        return object.__dir__(self) + self.vars + list(self.grid.keys())
+        return object.__dir__(self) + self.vars + dir(self.metadata) + dir(self.grid)
 
     def minmax(self, var: str='rho', range_: tuple=()) -> Tuple[float, float]:
         """
