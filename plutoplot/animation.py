@@ -37,5 +37,8 @@ def generate_animation(sim: Simulation, plot_func, output_name: str='animation.m
                   save_args: dict={'bbox_inches': 'tight'}):
     os.mkdir('tmp')
     render_frames_parallel(sim, plot_func, 'tmp/', plot_args, save_args)
-    subprocess.run(['ffmpeg', '-framerate', f'{framerate:d}', '-i', 'tmp/%04d.png', output_name])
+    subprocess.run(['ffmpeg', '-f', 'lavfi', '-i', 'anullsrc=stereo',
+                    '-framerate', f'{framerate:d}', '-i', 'tmp/%04d.png',
+                    '-shortest', '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
+                    '-c:a', 'aac', output_name])
     subprocess.run(['rm', '-r', 'tmp'])
