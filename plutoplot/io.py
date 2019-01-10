@@ -16,7 +16,7 @@ class Grid:
         self.mappings = {}
         self.mappings_tex = {}
         self.read_gridfile(gridfile)
-    
+
     def set_coordinate_system(self, coordinates, mappings={}, mappings_tex={}):
         self.coordinates = coordinates
         self.mappings = mappings
@@ -44,7 +44,7 @@ class Grid:
                     data = np.fromfile(gf, sep=' ', count=dim*3).reshape(-1, 3)
                     # calculate center of cell, and difference between cells
                     x.append((np.sum(data[:, 1:], axis=1)/2, data[:, 2] - data[:, 1]))
-        
+
         # save in grid datastructure
         for i, xn in enumerate(x, start=1):
             setattr(self, f"x{i}", xn[0])
@@ -64,13 +64,13 @@ class Grid:
 
     def mesh(self):
         return generate_coordinate_mesh(self.coordinates, self.x1, self.x2)
-    
+
     def __getattr__(self, name):
         try:
             return object.__getattribute__(self, self.mappings[name])
         except KeyError:
             raise AttributeError
-    
+
     def __str__(self):
         return f"PLUTO Grid, Dimensions {self.dims}"
     __repr__ = __str__
@@ -79,7 +79,7 @@ class Grid:
 class SimulationMetadata:
     def __init__(self, path, format) -> None:
         self.read_vars(path, format)
-    
+
     def read_vars(self, path, format) -> None:
         """Read simulation step data and written variables"""
         with open(path, 'r') as f:
@@ -207,32 +207,22 @@ class Definitions_h(OrderedDict):
     def __init__(self, path: str):
         super().__init__()
         self.path = path
-        self.base = OrderedDict()
-        self.phys_dep = OrderedDict()
-
         self.parse()
-        # self.general = OrderedDict()
-        # self.physics_dep = OrderedDict()
-        # self.userdef = OrderedDict()
-        ## TODO
-
-    # def _parse_def(self, txt):
-    #     if not line:
-    #         continue
-    #         segments = line.split()
-    #         if segments[0] == "#define":
-    #             return segments[1].lower(), segments[2].lower()
 
     def parse(self, txt: str=None) -> None:
-        if txt is None:
-            with open(self.path, 'r') as f:
-                lines = [l.strip() for l in f.readlines()]
-        else:
-            lines = [l.strip() for l in txt.split("\n")]
+        with open(self.path, 'r') as f:
+            lines = [l.strip() for l in f.readlines()]
+
 
         for line in lines:
-            key, value = _parse_def(line)
-            if key in self.base_opt:
-                self.base[key], value
-            elif key in self.physics_dep[self.base['physics']]:
-                self.phys_dep[key] = value
+            if not line:
+                continue
+            segments = line.split()
+            if segments[0] == "#define":
+                self[segments[1].lower()] = segments[2].lower()
+
+    def __getitem__(self, key):
+        return super().__getitem__(key.lower())
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key.lower(), value)

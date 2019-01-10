@@ -23,7 +23,7 @@ class PlutoData(object):
         self.file_mode = simulation.metadata.file_mode
         self.wdir, self.grid, self.vars = simulation.data_dir, simulation.grid, simulation.vars
         self.n, self.t, self.dt, self.nstep = n, simulation.t[n], simulation.dt[n], simulation.nstep[n]
-        
+
         self.data = {}
 
 
@@ -46,7 +46,6 @@ class PlutoData(object):
             if name in getattribute(self, 'vars'):
                 getattribute(self, '_load_var')(name)
                 return data[name]
-
         # simulation
         try:
             return getattr(getattribute(self, 'simulation'), name)
@@ -90,7 +89,7 @@ class PlutoData(object):
                 return latex_map[coord]
         except KeyError:
             return coord
-    
+
     def plot(self, var=None, **kwargs):
         if var is None:
             var = self.vars[0]
@@ -99,19 +98,18 @@ class PlutoData(object):
             var = getattr(self, var)
         else:
             varname = None
-        
+
         return plot(var, self.grid, label=f"${self.grid.mappings_tex.get(varname, varname)}$", **kwargs)
 
     def __str__(self) -> None:
         return f"""PlutoData, wdir: '{self.wdir}'
-resolution: {self.dims}, {self.coordinate_system} coordinates
+resolution: {self.dims}, {self.grid.coordinates} coordinates
 file nr: {self.n}, time: {self.t}, simulation step: {self.nstep}
 Variables: {self.vars}"""
 
 
     def __repr__(self) -> None:
-        return f"PlutoData({self.n}, wdir='{self.wdir}'" + \
-                (f", coordinates='{self.coordinate_system}'" if self.coordinate_system != 'cartesian' else "") + ")"
+        return f"PlutoData({self.n}, wdir='{self.wdir}', coordinates='{self.grid.coordinates}')"
 
     def __dir__(self) -> list:
         return object.__dir__(self) + self.vars + list(self.grid.keys())

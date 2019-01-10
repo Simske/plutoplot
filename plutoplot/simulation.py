@@ -55,7 +55,7 @@ class Simulation:
         self.vars = self.metadata.vars
 
         if coordinates is None:
-            coordinates = 'cartesian'
+            coordinates = self.definitions['geometry']
 
         self.grid.set_coordinate_system(coordinates,
                                         mappings=generate_coord_mapping(coordinates),
@@ -71,30 +71,32 @@ class Simulation:
         except AttributeError:
             self._ini = Pluto_ini(join(self.sim_dir, 'pluto.ini'))
             return self._ini
-    
+
     @property
     def definitions(self):
         try:
             return self._definitions
         except AttributeError:
             self._definitions = Definitions_h(join(self.sim_dir, 'definitions.h'))
+            return self._definitions
 
     def __getattr__(self, name):
-        metadata = object.__getattribute__(self, 'metadata')
+        getattribute = object.__getattribute__
+
         # metadata
         try:
-            return getattr(metadata, name)
+            return getattr(getattribute(self, 'metadata'), name)
         except:
             pass
 
         # grid
-        grid = object.__getattribute__(self, 'grid')
+        grid = getattribute(self, 'grid')
         try:
             return getattr(grid, name)
         except AttributeError:
             pass
         try:
-            return getattr(grid, self.mappings[name])
+            return getattr(grid, getattribute(self, 'mappings')[name])
         except KeyError:
             pass
 
@@ -107,7 +109,7 @@ class Simulation:
         raise AttributeError(f"{type(self)} has no attribute '{name}'")
 
     def _index(self, key: int) -> int:
-        """Check if index is in range and implements negative indexing"""
+        """Checks if index is in range and implements negative indexing"""
         if not isinstance(key, int):
             raise IndexError("Data index has to be int")
         elif key >= self.n:
@@ -166,7 +168,6 @@ class Simulation:
         result = np.empty()
         for i, d in enumerate(self):
             result[i] = func(d)
-
 
     def reduce_parallel(self, func):
         with multiprocessing.Pool() as p:
