@@ -14,8 +14,8 @@ def plot(data: np.ndarray, grid: Grid, ax=None, label: str=None, figsize=None,
                 x_size = 6.4
                 y_size = x_size * grid.dims[1] / grid.dims[0] / 1.1
                 figsize = (x_size, y_size)
-            fig, ax = plt.subplots(figsize=figsize)
-        
+            _, ax = plt.subplots(figsize=figsize)
+
         if projection:
             X, Y = grid.mesh()
             ax.set_xlabel('$x$')
@@ -33,5 +33,5 @@ def plot(data: np.ndarray, grid: Grid, ax=None, label: str=None, figsize=None,
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="10%", pad=0.05)
             plt.colorbar(im, label=label, format=formatter, cax=cax)
-        
-        return fig, ax
+
+        return ax.figure, ax

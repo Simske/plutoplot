@@ -21,8 +21,10 @@ class Simulation:
     """
     supported_formats = ('dbl', 'flt')
 
-    def __init__(self, sim_dir: str='', format: str=None, coordinates: str=None):
+    def __init__(self, sim_dir: str='', format: str=None, coordinates: str=None) -> None:
         self.sim_dir = sim_dir
+
+        ## Find data directory ##
         if os.path.exists(join(sim_dir, 'grid.out')):
             self.data_dir = sim_dir
         elif os.path.exists(join(sim_dir, 'data', 'grid.out')):
@@ -32,8 +34,13 @@ class Simulation:
         else:
             raise FileNotFoundError("Gridfile not found")
 
+        ## Read grid ##
         self.grid = Grid(join(self.data_dir, 'grid.out'))
 
+        # dict for individual data frames
+        self._data = {}
+
+        ## Find data format
         if format is None:
             for f in self.supported_formats:
                 if os.path.exists(join(self.data_dir, f'{f}.out')):
@@ -51,9 +58,11 @@ class Simulation:
             else:
                 raise FileNotFoundError(f"Metadata file {join(self.data_dir, f'{format}.out')} for format {format} not found")
 
+        ## Read metadata ##
         self.metadata = SimulationMetadata(join(self.data_dir, f'{self.format}.out'), self.format)
         self.vars = self.metadata.vars
 
+        ## Read grid coordinate system ##
         if coordinates is None:
             coordinates = self.definitions['geometry']
 
@@ -61,11 +70,9 @@ class Simulation:
                                         mappings=generate_coord_mapping(coordinates),
                                         mappings_tex=generate_tex_mapping(coordinates))
 
-        # dict for individual data frames
-        self._data = {}
-
     @property
-    def ini(self):
+    def ini(self) -> Pluto_ini:
+        """Read access to PLUTO runtime initialization file 'pluto.ini'"""
         try:
             return self._ini
         except AttributeError:
@@ -74,6 +81,7 @@ class Simulation:
 
     @property
     def definitions(self):
+        """Read access to PLUTO compile time 'definitions.h' file"""
         try:
             return self._definitions
         except AttributeError:
@@ -81,6 +89,7 @@ class Simulation:
             return self._definitions
 
     def __getattr__(self, name):
+        """Resolve attributes to metadata/data/grid attributes"""
         getattribute = object.__getattribute__
 
         # metadata
@@ -96,13 +105,13 @@ class Simulation:
         except AttributeError:
             pass
         try:
-            return getattr(grid, getattribute(self, 'mappings')[name])
+            return getattribute(grid, 'mappings')[name]
         except KeyError:
             pass
 
         # vars
         try:
-            return object.__getattribute__(self[-1], name)
+            return getattribute(self[-1], name)
         except AttributeError:
             pass
 
@@ -123,7 +132,7 @@ class Simulation:
     def __getitem__(self, key: int) -> PlutoData:
         """
         Access individual data frames, return them as PlutoData
-        If file is already loaded, object is returned, otherwise data is loaded
+        If file is already loaded, object is returned, otherwise data is loaded and returned
         """
         key = self._index(key)
 
@@ -164,14 +173,13 @@ class Simulation:
             DeprecationWarning)
         return self.iter()
 
-    def reduce(self, func):
-        result = np.empty()
-        for i, d in enumerate(self):
-            result[i] = func(d)
+    def reduce(self, func, dtype=float):
+        """Reduce all steps with func to dtype, returns numpy.ndarray(dtype)"""
+        return np.fromiter((func(d) for d in self), dtype=dtype)
 
-    def reduce_parallel(self, func):
+    def reduce_parallel(self, func, dtype=float):
         with multiprocessing.Pool() as p:
-            return np.array(p.map(func, self.iter()))
+            return np.array(p.map(func, self.iter()), dtype=dtype)
 
     def plot(self, *args, n: int=-1, **kwargs):
         """Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()"""
@@ -191,12 +199,12 @@ class Simulation:
     def __str__(self) -> str:
         return f"""PLUTO simulation, sim_dir: '{self.sim_dir}',
         data_dir: '{self.data_dir}'
-resolution: {self.dims}, {self.coordinate_system} coordinates
+resolution: {self.dims}, {self.grid.coordinates} coordinates
 data files: {self.n}, last time: {self.t[-1]}
 Variables: {self.vars}"""
 
     def __repr__(self) -> str:
-        return f"Simulation('{self.sim_dir}')"
+        return f"Simulation('{self.sim_dir}', format='{self.format}', coordinates='{self.grid.coordinates}')"
 
     def __dir__(self) -> list:
         return object.__dir__(self) + self.vars + dir(self.metadata) + dir(self.grid)
