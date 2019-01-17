@@ -29,10 +29,15 @@ class Simulation:
             self.data_dir = sim_dir
         elif os.path.exists(join(sim_dir, 'data', 'grid.out')):
             self.data_dir = join(sim_dir, 'data')
-        elif os.path.exists(join(sim_dir, self.ini['Static Grid Output']['output_dir'], 'grid.out')):
-            self.data_dir = join(join(sim_dir, self.ini['Static Grid Output']['output_dir']))
         else:
-            raise FileNotFoundError("Gridfile not found")
+            try:
+                from_ini = join(sim_dir, self.ini['Static Grid Output']['output_dir'], 'grid.out')
+                if os.path.exists(from_ini):
+                    self.data_dir = join(sim_dir)
+                else:
+                    raise FileNotFoundError()
+            except FileNotFoundError:
+                raise FileNotFoundError("Data directory with gridfile not found")
 
         ## Read grid ##
         self.grid = Grid(join(self.data_dir, 'grid.out'))
@@ -111,9 +116,10 @@ class Simulation:
 
         # vars
         try:
-            return getattribute(self[-1], name)
+            if name in self.vars:
+                return getattr(self[-1], name)
         except AttributeError:
-            pass
+            raise
 
         raise AttributeError(f"{type(self)} has no attribute '{name}'")
 
@@ -183,7 +189,7 @@ class Simulation:
 
     def plot(self, *args, n: int=-1, **kwargs):
         """Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()"""
-        self[n].plot(*args, **kwargs)
+        return self[n].plot(*args, **kwargs)
 
     def __len__(self) -> int:
         return self.n

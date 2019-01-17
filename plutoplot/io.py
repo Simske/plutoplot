@@ -67,9 +67,10 @@ class Grid:
 
     def __getattr__(self, name):
         try:
-            return object.__getattribute__(self, self.mappings[name])
+            mappings = object.__getattribute__(self, 'mappings')
+            return object.__getattribute__(self, mappings[name])
         except KeyError:
-            raise AttributeError
+            raise AttributeError(f"{type(self)} has no attribute '{name}'")
 
     def __str__(self):
         return f"PLUTO Grid, Dimensions {self.dims}"
