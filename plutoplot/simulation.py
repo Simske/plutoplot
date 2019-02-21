@@ -203,7 +203,7 @@ class Simulation:
 
         except (NameError, ImportError):
             pass
-        # return self[n].plot(*args, **kwargs)
+        self[n].plot(*args, **kwargs)
 
     def __len__(self) -> int:
         return self.n
