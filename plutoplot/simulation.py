@@ -187,9 +187,23 @@ class Simulation:
         with multiprocessing.Pool() as p:
             return np.array(p.map(func, self.iter()), dtype=dtype)
 
-    def plot(self, *args, n: int=-1, **kwargs):
+    def plot(self, *args, n: int=-1,  **kwargs) -> None:
         """Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()"""
-        return self[n].plot(*args, **kwargs)
+
+        # Use widget to choose timestep if inside Jupyter Notebook
+        try:
+            get_ipython
+            import ipywidgets as widgets
+            def handler(i):
+                self[i].plot(*args, **kwargs)
+            widgets.interact(handler, i=widgets.IntSlider(min=0,
+                                                         max=len(self)-1,
+                                                         value=self._index(n)),
+                                                         description="Simulation frame")
+
+        except (NameError, ImportError):
+            pass
+        # return self[n].plot(*args, **kwargs)
 
     def __len__(self) -> int:
         return self.n
