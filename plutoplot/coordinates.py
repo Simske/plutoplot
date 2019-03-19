@@ -10,11 +10,11 @@ def generate_coord_mapping(coordinates: str) -> dict:
         },
         'polar': {
             'r': 'x1',
+            'phi': 'x2',
             'z': 'x2'
         },
         'cylindrical': {
             'r': 'x1',
-            'phi': 'x2',
             'z': 'x3'
         },
         'spherical': {
@@ -39,11 +39,11 @@ def generate_tex_mapping(coordinates: str) -> dict:
             'x2': 'y',
             'x3': 'z'
         },
-        'polar': {
+        'cylindrical': {
             'x1': 'r',
             'x2': 'z'
         },
-        'cylindrical': {
+        'polar': {
             'x1': 'r',
             'x2': r'\phi',
             'x3': 'z'
@@ -74,6 +74,8 @@ def generate_coordinate_mesh(coordinates, x1, x2):
         y = r * np.cos(theta)
         return x, y
     elif coordinates == 'cylindrical':
+        return x1, x2
+    elif coordinates == 'polar':
         r, phi = np.meshgrid(x1, x2)
         x = r * np.cos(phi)
         y = r * np.sin(phi)

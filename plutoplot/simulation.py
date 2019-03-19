@@ -188,7 +188,10 @@ class Simulation:
             return np.array(p.map(func, self.iter()), dtype=dtype)
 
     def plot(self, *args, n: int=-1,  **kwargs) -> None:
-        """Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()"""
+        """
+        Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()
+        No return, because it would interfere with interactive output in Jupyter Notebook
+        """
 
         # Use widget to choose timestep if inside Jupyter Notebook
         try:
@@ -196,14 +199,15 @@ class Simulation:
             import ipywidgets as widgets
             def handler(i):
                 self[i].plot(*args, **kwargs)
-            widgets.interact(handler, i=widgets.IntSlider(min=0,
+            plot = widgets.interactive(handler, i=widgets.IntSlider(min=0,
                                                          max=len(self)-1,
-                                                         value=self._index(n)),
-                                                         description="Simulation frame")
+                                                         value=self._index(n)))
+            plot.children[0].description = "Simulation frame"
+            plot.children[0].layout.width = "20%"
+            display(plot)
 
         except (NameError, ImportError):
-            pass
-        self[n].plot(*args, **kwargs)
+            self[n].plot(*args, **kwargs)
 
     def __len__(self) -> int:
         return self.n
