@@ -124,7 +124,7 @@ class Pluto_ini(OrderedDict):
 
         def __str__(self):
             colwidth = self._align()
-            out = "[{}]\n".format(self.name)
+            out = "[{}]\n\n".format(self.name)
             for key, value in self.items():
                 out += "{}{}\n".format(rpad([key], colwidth), lpad(value, colwidth[1:]))
             return out
