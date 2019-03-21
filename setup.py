@@ -8,5 +8,10 @@ setup(
     install_requires=[
         'numpy',
         'matplotlib'
-    ]
+    ],
+    entry_points={
+        'console_scripts': [
+            'pluto-format-ini = plutoplot.scripts:format_ini'
+        ]
+    }
 )
