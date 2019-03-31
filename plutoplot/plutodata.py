@@ -52,17 +52,17 @@ class PlutoData(object):
         except AttributeError:
             pass
 
-        raise AttributeError(f"{type(self)} has no attribute '{name}'")
+        raise AttributeError("{} has no attribute '{}'".format(type(self), name))
 
     def _load_var(self, var):
         """Load data for var into memory. Read either var dbl file (multiple_files mode),
         or, slice data from single dbl file"""
         if self.file_mode == 'single':
-            filename = f"data.{self.n:04d}.{self.format}"
+            filename = "data.{n:04d}.{format}".format(n=self.n, format=self.format)
             # byte offset of variable in dbl file
             offset = self.charsize * self.size * self.vars.index(var)
         elif self.file_mode == 'multiple':
-            filename = f"{var}.{self.n:04d}.{self.format}"
+            filename = "{var}.{:04d}.{srmat}".format(var=var, n=self.n, format=self.format)
             offset = 0
 
         with open(os.path.join(self.wdir, filename), 'rb') as f:
@@ -82,9 +82,9 @@ class PlutoData(object):
 
         try:
             if coord[0] == 'v':
-                return f"$v_{{{self._latex(self.coord_names[int(coord[2])-1], 0)}}}$"
+                return "$v_{{{}}}$".format(self._latex(self.coord_names[int(coord[2])-1], 0))
             if tags:
-                return f'${latex_map[coord]}$'
+                return '${}$'.format(latex_map[coord])
             else:
                 return latex_map[coord]
         except KeyError:
@@ -99,17 +99,19 @@ class PlutoData(object):
         else:
             varname = None
 
-        return plot(var, self.grid, label=f"${self.grid.mappings_tex.get(varname, varname)}$", **kwargs)
+        return plot(var, self.grid, label="${}$".format(self.grid.mappings_tex.get(varname, varname)), **kwargs)
 
     def __str__(self) -> None:
-        return f"""PlutoData, wdir: '{self.wdir}'
-resolution: {self.dims}, {self.grid.coordinates} coordinates
-file nr: {self.n}, time: {self.t}, simulation step: {self.nstep}
-Variables: {self.vars}"""
+        return """PlutoData, wdir: '{wdir}'
+resolution: {dims}, {cords} coordinates
+file nr: {n}, time: {t}, simulation step: {nstep}
+Variables: {vars}""".format(wdir=self.wdir, dims=self.dims, coord=self.grid.coordinates,
+                                 n=self.n, t=self.t, nstep=self.nstep, vars=self.vars)
 
 
     def __repr__(self) -> None:
-        return f"PlutoData({self.n}, wdir='{self.wdir}', coordinates='{self.grid.coordinates}')"
+        return "PlutoData({n}, wdir='{wdir}', coordinates='{coords}')".format(n=self.n,
+                                    wdir=self.wdir, coords=self.grid.coordinates)
 
     def __dir__(self) -> list:
         return object.__dir__(self) + self.vars + list(self.grid.keys())

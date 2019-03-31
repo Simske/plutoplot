@@ -47,8 +47,8 @@ class Grid:
 
         # save in grid datastructure
         for i, xn in enumerate(x, start=1):
-            setattr(self, f"x{i}", xn[0])
-            setattr(self, f"dx{i}", xn[1])
+            setattr(self, "x{}".format(i), xn[0])
+            setattr(self, "dx{}".format(i), xn[1])
         self.dims = tuple(dims)
 
         shape = []
@@ -70,10 +70,10 @@ class Grid:
             mappings = object.__getattribute__(self, 'mappings')
             return object.__getattribute__(self, mappings[name])
         except KeyError:
-            raise AttributeError(f"{type(self)} has no attribute '{name}'")
+            raise AttributeError("{} has no attribute '{}'".format(type(self), name))
 
     def __str__(self):
-        return f"PLUTO Grid, Dimensions {self.dims}"
+        return "PLUTO Grid, Dimensions {}".format(self.dims)
     __repr__ = __str__
 
 
@@ -103,7 +103,7 @@ class SimulationMetadata:
 
             self.charsize = 8 if format == 'dbl' else 4
             endianness = '<' if endianness == 'little' else '>'
-            self.binformat = f"{endianness}f{self.charsize}"
+            self.binformat = "{}f{}".format(endianness, self.charsize)
 
 class Pluto_ini(OrderedDict):
     """Parser for Plutocode initialization file pluto.ini"""

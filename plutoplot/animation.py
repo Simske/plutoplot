@@ -20,7 +20,7 @@ def parameter_generator(sim: Simulation, plot_func, output_path,
 
 def generate_frame(sim, i, plot_func, output_path, plot_args, save_args):
     fig = plot_func(sim[i], **plot_args)
-    fig.savefig(f"{output_path}{i:04d}.png", **save_args)
+    fig.savefig("{}{:04d}.png".format(output_path, i), **save_args)
     plt.close(fig)
     del sim[i]
 
@@ -38,7 +38,7 @@ def generate_animation(sim: Simulation, plot_func, output_name: str='animation.m
     os.mkdir('tmp')
     render_frames_parallel(sim, plot_func, 'tmp/', plot_args, save_args)
     subprocess.run(['ffmpeg', '-f', 'lavfi', '-i', 'anullsrc=stereo',
-                    '-framerate', f'{framerate:d}', '-i', 'tmp/%04d.png',
+                    '-framerate', '{:d}'.format(framerate), '-i', 'tmp/%04d.png',
                     '-shortest', '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
                     '-c:a', 'aac', output_name])
     subprocess.run(['rm', '-r', 'tmp'])

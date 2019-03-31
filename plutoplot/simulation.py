@@ -48,23 +48,25 @@ class Simulation:
         ## Find data format
         if format is None:
             for f in self.supported_formats:
-                if os.path.exists(join(self.data_dir, f'{f}.out')):
+                if os.path.exists(join(self.data_dir, f+'.out')):
                     self.format = f
                     break
             try:
                 self.format
             except AttributeError:
-                raise FileNotFoundError(f'No Metadata file for formats {self.supported_formats} found in {self.data_dir}')
+                raise FileNotFoundError("No Metadata file for formats "
+                    "{} found in {}".format(self.supported_formats, self.data_dir))
         else:
             if format not in self.supported_formats:
-                raise NotImplementedError(f"Format '{format}' not supported")
-            if os.path.exists(join(self.data_dir, f'{format}.out')):
+                raise NotImplementedError("Format '{}' not supported".format(format))
+            if os.path.exists(join(self.data_dir, '{}.out'.format(format))):
                 self.format = format
             else:
-                raise FileNotFoundError(f"Metadata file {join(self.data_dir, f'{format}.out')} for format {format} not found")
+                raise FileNotFoundError("Metadata file {} "
+                "for format {} not found".format(join(self.data_dir, format+'.out'), format))
 
         ## Read metadata ##
-        self.metadata = SimulationMetadata(join(self.data_dir, f'{self.format}.out'), self.format)
+        self.metadata = SimulationMetadata(join(self.data_dir, '{}.out'.format(self.format)), self.format)
         self.vars = self.metadata.vars
 
         ## Read grid coordinate system ##
@@ -121,7 +123,7 @@ class Simulation:
         except AttributeError:
             raise
 
-        raise AttributeError(f"{type(self)} has no attribute '{name}'")
+        raise AttributeError("{} has no attribute '{}'".format(type(self), name))
 
     def _index(self, key: int) -> int:
         """Checks if index is in range and implements negative indexing"""
@@ -221,14 +223,17 @@ class Simulation:
         self._data.clear()
 
     def __str__(self) -> str:
-        return f"""PLUTO simulation, sim_dir: '{self.sim_dir}',
-        data_dir: '{self.data_dir}'
-resolution: {self.dims}, {self.grid.coordinates} coordinates
-data files: {self.n}, last time: {self.t[-1]}
-Variables: {self.vars}"""
+        return """PLUTO simulation, sim_dir: '{sim_dir}',
+        data_dir: '{data_dir}'
+resolution: {dims}, {coord} coordinates
+data files: {n}, last time: {t}
+Variables: {self.vars}""".format(sim_dir=self.sim_dir, data_dir=self.data_dir,
+        dims=self.dims, coord=self.grid.coordinates, n=self.n, t=self.t[-1],
+        vars=self.vars)
 
     def __repr__(self) -> str:
-        return f"Simulation('{self.sim_dir}', format='{self.format}', coordinates='{self.grid.coordinates}')"
+        return "Simulation('{sim_dir}', format='{format}', coordinates='{coord}')".format(
+            sim_dir=self.sim_dir, format=self.format, coord=self.grid.coordinates)
 
     def __dir__(self) -> list:
         return object.__dir__(self) + self.vars + dir(self.metadata) + dir(self.grid)

@@ -24,11 +24,11 @@ def generate_coord_mapping(coordinates: str) -> dict:
         }
     }
     if coordinates not in mappings:
-        raise NotImplementedError(f'Coordinate system {coordinates} not implemented')
+        raise NotImplementedError("Coordinate system {} not implemented".format(coordinates))
     mapping = mappings[coordinates]
     velocities = {}
     for key, value in mapping.items():
-        velocities[f"v{key}"] = f"v{value}"
+        velocities["v"+key] = "v"+value
     mapping.update(velocities)
     return mapping
 
@@ -55,11 +55,11 @@ def generate_tex_mapping(coordinates: str) -> dict:
         }
     }
     if coordinates not in mappings:
-        raise NotImplementedError(f'Tex mappings for {coordinates} not implemented')
+        raise NotImplementedError("Tex mappings for {} not implemented".format(coordinates))
     mapping = mappings[coordinates]
     velocities = {}
     for key, value in mapping:
-        velocities[f"v{key}"] = f"v_{value}"
+        velocities["v"+key] = "v_" + value
     mapping.update(velocities)
     mapping['rho'] = r'\rho'
     mapping['prs'] = 'p'
