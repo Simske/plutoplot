@@ -205,7 +205,7 @@ class Simulation:
                                                          max=len(self)-1,
                                                          value=self._index(n)))
             plot.children[0].description = "Simulation frame"
-            plot.children[0].layout.width = "20%"
+            plot.children[0].layout.width = "40%"
             display(plot)
 
         except (NameError, ImportError):
