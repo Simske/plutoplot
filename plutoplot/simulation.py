@@ -181,13 +181,50 @@ class Simulation:
             DeprecationWarning)
         return self.iter()
 
-    def reduce(self, func, dtype=float):
-        """Reduce all steps with func to dtype, returns numpy.ndarray(dtype)"""
-        return np.fromiter((func(d) for d in self), dtype=dtype)
+    def reduce(self, func, dtype=None):
+        """
+        Reduce all simulation steps with function.
+        shape and dtype are taken from return of func.
+        Parameters:
+         - func: function which takes a PlutoData object and returns scalar or numpy array.
+         - dtype: forced data type for result array (if None func() implies dtype)
+        Returns:
+         - numpy.ndarray with datatype and shape implied from func
+        """
+        first = np.array(func(self[0]))
+        if dtype is None:
+            dtype = first.dtype
+        if first.shape == () or first.shape == (1,):
+            return np.fromiter((func(d) for d in self), dtype=dtype, count=N)
+        else:
+            shape = (len(self), *first.shape)
+            res = np.empty(shape, dtype=dtype)
+            for i, d in enumerate(self):
+                res[i] = func(d)
+            return res
 
-    def reduce_parallel(self, func, dtype=float):
-        with multiprocessing.Pool() as p:
-            return np.array(p.map(func, self.iter()), dtype=dtype)
+    def reduce_parallel(self, func, processes=None, dtype=None):
+        """
+        Reduce all simulation steps with function in parallel.
+        shape and dtype are taken from return of func.
+        Parameters:
+         - func: function which takes a PlutoData object and returns scalar or numpy array.
+                 cannot be lambda function! (function needs to be pickled)
+         - processes: number of processes for parallel computation
+         - dtype: forced data type for result array (if None func() implies dtype)
+        Returns:
+         - numpy.ndarray with datatype and shape implied from func
+        """
+        first = np.array(func(self[0]))
+        if dtype is None:
+            dtype = first.dtype
+
+        shape = (len(self), *first.shape)
+        res = np.empty(shape, dtype=dtype)
+        with multiprocessing.Pool(processes) as p:
+            for i, d in enumerate(p.imap(func, self.iter())):
+                res[i] = d
+        return res
 
     def plot(self, *args, n: int=-1,  **kwargs) -> None:
         """
