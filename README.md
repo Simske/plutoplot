@@ -12,13 +12,18 @@ matplotlib
 ```
 
 ## Installation
-Download from archive or via git, then run
-```python
+Install it with pip:
+```
+pip install git+https://gitlab.mpcdf.mpg.de/sdoetsch/plutoplot.git
+```
+
+Or download repository (as archive or with git)
+```
 python setup.py install
 ```
 
 If you downloaded via git and want to keep updating via git, you can also use
-```python
+```
 python setup.py develop
 ```
 This way the package is always read in from the git directory.
