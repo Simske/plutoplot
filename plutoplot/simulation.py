@@ -138,7 +138,7 @@ class Simulation:
                 raise IndexError("Data index out of range")
         return key
 
-    def __getitem__(self, key: int) -> self.DataObject:
+    def __getitem__(self, key: int) -> DataObject:
         """
         Access individual data frames, return them as PlutoData
         If file is already loaded, object is returned, otherwise data is loaded and returned
@@ -152,15 +152,15 @@ class Simulation:
             self._data[key] = self._load_data(key)
             return self._data[key]
 
-    def _load_data(self, key: int) -> self.DataObject:
+    def _load_data(self, key: int) -> DataObject:
         """Load data frame"""
         return self.DataObject(n=self._index(key), simulation=self)
 
-    def __iter__(self) -> Generator[self.DataObject, None, None]:
+    def __iter__(self) -> Generator[DataObject, None, None]:
         """Iterate over all data frames"""
         return self.iter()
 
-    def iter(self, start: int=0, stop: int=None, step: int=1, memory_keep: bool=False) -> Generator[self.DataObject, None, None]:
+    def iter(self, start: int=0, stop: int=None, step: int=1, memory_keep: bool=False) -> Generator[DataObject, None, None]:
         """
         Iterate over data frames in range, (or all).
         start, stop, step [int]: works like range (start inclusive, stop exclusive)
@@ -175,7 +175,7 @@ class Simulation:
             for i in range(start, stop, step):
                 yield self._load_data(i)
 
-    def memory_iter(self, start=0, stop=-1, step=1) -> Generator[self.DataObject, None, None]:
+    def memory_iter(self, start=0, stop=-1, step=1) -> Generator[DataObject, None, None]:
         """Deprecated, use Simulation.iter() instead"""
         warnings.warn(
             "plutoplot.Simulation.memory_iter() is deprecated, use plutoplot.Simulation.iter()",
