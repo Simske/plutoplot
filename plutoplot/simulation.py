@@ -195,7 +195,7 @@ class Simulation:
         if dtype is None:
             dtype = first.dtype
         if first.shape == () or first.shape == (1,):
-            return np.fromiter((func(d) for d in self), dtype=dtype, count=N)
+            return np.fromiter((func(d) for d in self), dtype=dtype, count=len(self))
         else:
             shape = (len(self), *first.shape)
             res = np.empty(shape, dtype=dtype)
