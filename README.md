@@ -68,9 +68,9 @@ Simulation(sim_dir='', format=None, coordinates=None)
   plutoplot searchs for the gridfile and simulation data first in `sim_dir`,
   then in `sim_dir/data`, and then looks up the data directory in `pluto.ini`.
   Default: Current working directory
-- `format`: file format of the simulation data, currently supports `double` and `float`
+- `format`: file format of the simulation data, currently supports `dbl`, `flt`, `vtk`
   in both `single_file` and `multiple_files` mode.
-  Default: `double` and `float` are tried in that order
+  Default: `dbl`, `flt`, `vtk`, are tried in that order
 - `coordinates`: coordinate system of the simulation grid.
   Supports `cartesian`, `spherical`, `polar`, `cylindrical`.
   Only necessary for projecting the grind into a cartesian system (e.g. for plotting).

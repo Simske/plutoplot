@@ -83,8 +83,13 @@ class SimulationMetadata:
         self.read_vars(join(data_dir, '{}.out'.format(format)), format)
 
         # read VTK offsets in file
-        if format == 'vtk' and self.file_mode == 'single':
-            self.vtk_offsets = vtk_offsets(join(data_dir, 'data.0000.vtk'))
+        if format == 'vtk':
+            if self.file_mode == 'single':
+                self.vtk_offsets = vtk_offsets(join(data_dir, 'data.0000.vtk'))
+            else:
+                self.vtk_offsets = {}
+                for var in self.vars:
+                    self.vtk_offsets.update(vtk_offsets(join(data_dir, '{}.0000.vtk'.format(var))))
 
     def read_vars(self, path, format) -> None:
         """Read simulation step data and written variables"""

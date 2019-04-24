@@ -62,12 +62,15 @@ class PlutoData(object):
                 filename = "data.{n:04d}.{format}".format(n=self.n, format=self.format)
                 # byte offset of variable in dbl file
                 offset = self.charsize * self.size * self.vars.index(var)
-            elif self.file_mode == 'multiple':
+            else:
                 filename = "{var}.{:04d}.{format}".format(var=var, n=self.n, format=self.format)
                 offset = 0
         elif self.format == 'vtk':
-            filename = "data.{n:04d}.vtk".format(n=self.n)
             offset = self.simulation.metadata.vtk_offsets[var]
+            if self.file_mode == 'single':
+                filename = "data.{n:04d}.vtk".format(n=self.n)
+            else:
+                filename = "{var}.{n:04d}.vtk".format(var=var, n=self.n)
 
 
         shape = tuple(reversed(self.data_shape))
