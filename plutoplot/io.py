@@ -1,6 +1,7 @@
 import numpy as np
 from collections import OrderedDict
 from itertools import zip_longest
+from os.path import join
 
 from .coordinates import generate_coordinate_mesh
 
@@ -78,8 +79,12 @@ class Grid:
 
 
 class SimulationMetadata:
-    def __init__(self, path, format) -> None:
-        self.read_vars(path, format)
+    def __init__(self, data_dir, format) -> None:
+        self.read_vars(join(data_dir, '{}.out'.format(format)), format)
+
+        # read VTK offsets in file
+        if format == 'vtk' and self.file_mode == 'single':
+            self.vtk_offsets = vtk_offsets(join(data_dir, 'data.0000.vtk'))
 
     def read_vars(self, path, format) -> None:
         """Read simulation step data and written variables"""
@@ -103,7 +108,36 @@ class SimulationMetadata:
 
             self.charsize = 8 if format == 'dbl' else 4
             endianness = '<' if endianness == 'little' else '>'
+            if format == 'vtk': endianness = '>' # VTK has always big endian
             self.binformat = "{}f{}".format(endianness, self.charsize)
+
+def vtk_offsets(filename) -> dict:
+    """
+    Read positions of vars in VTK legacy file
+    """
+    offsets = {}
+    with open(filename, 'rb') as f:
+        for l in f:
+            if not l or l == b'\n':
+                continue
+
+            split = l.split()
+
+            # skip coordinates (read in via gridfile)
+            if split[0] in [i + b'_COORDINATES' for i in [b"X", b"Y", b"Z",]]:
+                f.seek(int(split[1]) * 4 + 1, 1)
+
+            if split[0] == b'CELL_DATA':
+                bytesize = int(split[1]) * 4
+
+            # save position of variables
+            if split[0] == b'SCALARS':
+                var = split[1].decode()
+                f.readline() # skip "LOOKUP_TABLE"
+                offsets[var] = f.tell()
+                f.seek(bytesize, 1)
+
+    return offsets
 
 class Pluto_ini(OrderedDict):
     """Parser for Plutocode initialization file pluto.ini"""

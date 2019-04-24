@@ -19,7 +19,7 @@ class Simulation:
     loads individual files when needed.
     Simulation is subscriptable and iterable.
     """
-    supported_formats = ('dbl', 'flt')
+    supported_formats = ('dbl', 'flt', 'vtk')
     DataObject = PlutoData
 
     def __init__(self, sim_dir: str='', format: str=None, coordinates: str=None) -> None:
@@ -67,7 +67,7 @@ class Simulation:
                 "for format {} not found".format(join(self.data_dir, format+'.out'), format))
 
         ## Read metadata ##
-        self.metadata = SimulationMetadata(join(self.data_dir, '{}.out'.format(self.format)), self.format)
+        self.metadata = SimulationMetadata(join(self.data_dir), self.format)
         self.vars = self.metadata.vars
 
         ## Read grid coordinate system ##
