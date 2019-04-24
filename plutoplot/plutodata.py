@@ -62,13 +62,14 @@ class PlutoData(object):
             # byte offset of variable in dbl file
             offset = self.charsize * self.size * self.vars.index(var)
         elif self.file_mode == 'multiple':
-            filename = "{var}.{:04d}.{srmat}".format(var=var, n=self.n, format=self.format)
+            filename = "{var}.{:04d}.{format}".format(var=var, n=self.n, format=self.format)
             offset = 0
 
-        with open(os.path.join(self.wdir, filename), 'rb') as f:
-            f.seek(offset)
-            shape = tuple(reversed(self.data_shape))
-            self.data[var] = np.fromfile(f, dtype=self.binformat, count=self.size).reshape(shape).T
+
+        shape = tuple(reversed(self.data_shape))
+        self.data[var] = np.memmap(os.path.join(self.wdir, filename), dtype=self.binformat,
+                            mode='c', offset=offset, shape=shape).T
+        setattr(self, var, self.data[var])
 
 
     def _latex(self, coord: str, tags: bool=True) -> str:
