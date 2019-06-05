@@ -74,10 +74,20 @@ class PlutoData(object):
 
 
         shape = tuple(reversed(self.data_shape))
-        self.data[var] = np.memmap(os.path.join(self.wdir, filename), dtype=self.binformat,
-                            mode='c', offset=offset, shape=shape).T
+        self.data[var] = self._post_load_process(var,
+                            np.memmap(os.path.join(self.wdir, filename),
+                            dtype=self.binformat, mode='c', offset=offset, shape=shape).T)
         setattr(self, var, self.data[var])
 
+    def _post_load_process(self, varname, data):
+        """
+        User method to process data after loading from disk. Called by _load_var().
+        varname: variable name of loaded data
+        data: array with data
+
+        returns: modified data array
+        """
+        return data
 
     def _latex(self, coord: str, tags: bool=True) -> str:
         if coord is None:
