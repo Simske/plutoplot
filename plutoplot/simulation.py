@@ -143,14 +143,24 @@ class Simulation:
         Access individual data frames, return them as PlutoData
         If file is already loaded, object is returned, otherwise data is loaded and returned
         """
+        return self.get(key)
+
+    def get(self, key: int, keep: bool=True) -> DataObject:
+        """
+        Access individual data frames, return them as PlutoData
+        If file is already loaded, object is returned, otherwise data is loaded and returned
+        if `keep=True`, object is kept in memory
+        """
         key = self._index(key)
 
         try:
             return self._data[key]
         except KeyError:
             # load data frame
-            self._data[key] = self._load_data(key)
-            return self._data[key]
+            data = self._load_data(key)
+            if keep:
+                self._data[key] = data
+            return data
 
     def _load_data(self, key: int) -> DataObject:
         """Load data frame"""
@@ -168,12 +178,8 @@ class Simulation:
         """
         start = self._index(start)
         stop = len(self) if stop is None else self._index(stop)
-        if memory_keep:
-            for i in range(start, stop, step):
-                yield self[i]
-        else:
-            for i in range(start, stop, step):
-                yield self._load_data(i)
+        for i in range(start, stop, step):
+            yield self.get(i, memory_keep)
 
     def memory_iter(self, start=0, stop=-1, step=1) -> Generator[DataObject, None, None]:
         """Deprecated, use Simulation.iter() instead"""
