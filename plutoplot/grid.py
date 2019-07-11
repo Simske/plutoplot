@@ -22,6 +22,7 @@ class Grid:
         self.mappings_tex = mappings_tex
 
     def read_gridfile(self, gridfile_path) -> None:
+        # to be filled with left and right cell interfaces
         x = []
         dims = []
         with open(gridfile_path, 'r') as gf:
@@ -41,23 +42,21 @@ class Grid:
                     dims.append(dim)
                     # read all data from dimension, moves file pointer
                     data = np.fromfile(gf, sep=' ', count=dim*3).reshape(-1, 3)
-                    # calculate center of cell, and difference between cells
-                    x.append((np.sum(data[:, 1:], axis=1)/2, data[:, 2] - data[:, 1]))
+                    # save left and right cell interface
+                    x.append((data[:,1], data[:,2]))
 
         # save in grid datastructure
         for i, xn in enumerate(x, start=1):
-            setattr(self, "x{}".format(i), xn[0])
-            setattr(self, "dx{}".format(i), xn[1])
+            # cell interfaces
+            setattr(self, "x{}l".format(i), xn[0])
+            setattr(self, "x{}r".format(i), xn[1])
+            # cell centers
+            setattr(self, "x{}".format(i), (xn[0] + xn[1])/2)
+            # cell width
+            setattr(self, "dx{}".format(i), xn[1] - xn[0])
         self.dims = tuple(dims)
 
-        shape = []
-        if self.dims[2] > 1:
-            shape.append(self.dims[2])
-        if self.dims[1] > 1:
-            shape.append(self.dims[1])
-        if self.dims[0] > 1:
-            shape.append(self.dims[0])
-        self.data_shape = tuple(shape)
+        self.data_shape = tuple((self.dims[i] for i in range(2,-1,-1) if self.dims[i] > 1))
 
         self.size = np.product(self.dims)
 

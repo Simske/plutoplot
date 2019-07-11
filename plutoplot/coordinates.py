@@ -26,9 +26,15 @@ def generate_coord_mapping(coordinates: str) -> dict:
     if coordinates not in mappings:
         raise NotImplementedError("Coordinate system {} not implemented".format(coordinates))
     mapping = mappings[coordinates]
+    grid_mappings = {}
+    for key, value in mapping.items():
+        grid_mappings[key+"l"] = value+"l"
+        grid_mappings[key+"r"] = value+"r"
+        grid_mappings["d"+key] = "d"+value
     velocities = {}
     for key, value in mapping.items():
         velocities["v"+key] = "v"+value
+    mapping.update(grid_mappings)
     mapping.update(velocities)
     return mapping
 
