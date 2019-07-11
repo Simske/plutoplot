@@ -51,12 +51,12 @@ class Grid:
         self.dims = tuple(dims)
 
         shape = []
-        if self.dims[0] > 1:
-            shape.append(self.dims[0])
-        if self.dims[1] > 1:
-            shape.append(self.dims[1])
         if self.dims[2] > 1:
             shape.append(self.dims[2])
+        if self.dims[1] > 1:
+            shape.append(self.dims[1])
+        if self.dims[0] > 1:
+            shape.append(self.dims[0])
         self.data_shape = tuple(shape)
 
         self.size = np.product(self.dims)

@@ -25,7 +25,7 @@ def plot(data: np.ndarray, grid: Grid, ax=None, label: str=None, figsize=None,
             ax.set_xlabel("${}$".format(grid.mappings_tex['x1']))
             ax.set_ylabel("${}$".format(grid.mappings_tex['x2']))
 
-        im = ax.pcolormesh(X, Y, data.T, vmin=vmin, vmax=vmax, cmap=cmap)
+        im = ax.pcolormesh(X, Y, data, vmin=vmin, vmax=vmax, cmap=cmap)
         ax.set_aspect(1)
         if cbar:
             formatter = ScalarFormatter()

@@ -73,10 +73,9 @@ class PlutoData(object):
                 filename = "{var}.{n:04d}.vtk".format(var=var, n=self.n)
 
 
-        shape = tuple(reversed(self.data_shape))
         self.data[var] = self._post_load_process(var,
                             np.memmap(os.path.join(self.wdir, filename),
-                            dtype=self.binformat, mode='c', offset=offset, shape=shape).T)
+                            dtype=self.binformat, mode='c', offset=offset, shape=self.data_shape))
         setattr(self, var, self.data[var])
 
     def _post_load_process(self, varname, data):
