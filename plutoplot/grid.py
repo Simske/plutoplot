@@ -1,6 +1,6 @@
 import numpy as np
 
-from .coordinates import generate_coordinate_mesh
+from .coordinates import transform_mesh
 
 
 class Grid:
@@ -60,8 +60,38 @@ class Grid:
 
         self.size = np.product(self.dims)
 
-    def mesh(self):
-        return generate_coordinate_mesh(self.coordinates, self.x1, self.x2)
+    def mesh_center(self):
+        """
+        2D cell center mesh in native coordinates
+        Returns:
+        X, Y with shape for each: (dim[1],dim[0])
+        """
+        return np.meshgrid(self.x1, self.x2)
+
+    def mesh_edge(self):
+        """
+        2D cell edge mesh in native coordinates
+        Returns:
+        X, Y with shape for each: (dim[1]+1,dim[0]+1)
+        """
+        return np.meshgrid(np.append(self.x1l, self.x1r[-1]),
+                           np.append(self.x2l, self.x2r[-1]))
+
+    def mesh_center_cartesian(self):
+        """
+        2D cell center mesh trasformed to cartesian coordinates
+        Returns:
+        X, Y with shape for each: (dim[1],dim[0])
+        """
+        return transform_mesh(self.coordinates, *self.mesh_center())
+
+    def mesh_edge_cartesian(self):
+        """
+        2D cell edge mesh trasformed to cartesian coordinates
+        Returns:
+        X, Y with shape for each: (dim[1]+1,dim[0]+1)
+        """
+        return transform_mesh(self.coordinates, *self.mesh_edge())
 
     def __getattr__(self, name):
         try:

@@ -71,18 +71,16 @@ def generate_tex_mapping(coordinates: str) -> dict:
     mapping['prs'] = 'p'
     return mapping
 
-def generate_coordinate_mesh(coordinates, x1, x2):
+def transform_mesh(coordinates, x1, x2):
     if coordinates == 'cartesian':
         return x1, x2
     elif coordinates == 'spherical':
-        r, theta = np.meshgrid(x1, x2)
-        x = r * np.sin(theta)
-        y = r * np.cos(theta)
+        x = x1 * np.sin(x2)
+        y = x1 * np.cos(x2)
         return x, y
     elif coordinates == 'cylindrical':
         return x1, x2
     elif coordinates == 'polar':
-        r, phi = np.meshgrid(x1, x2)
-        x = r * np.cos(phi)
-        y = r * np.sin(phi)
+        x = x1 * np.cos(x2)
+        y = x1 * np.sin(x2)
         return x, y

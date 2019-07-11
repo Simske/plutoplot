@@ -1,7 +1,7 @@
 import unittest
 import os
 import numpy as np
-from plutoplot.io import Grid
+from plutoplot.grid import Grid
 from generate_testdata import generate_gridfile
 
 class TestGrid(unittest.TestCase):
@@ -14,11 +14,11 @@ class TestGrid(unittest.TestCase):
 
     def tearDown(self):
         os.remove(self.file)
-    
+
     def testDimensions(self):
         self.assertEqual(self.dims, self.grid.dims)
         self.assertEqual(self.dims, self.grid.data_shape)
-    
+
     def testData(self):
         for i, res in enumerate(self.dims, start=1):
             x = getattr(self.grid, f'x{i}')

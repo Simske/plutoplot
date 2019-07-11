@@ -6,7 +6,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from .grid import Grid
 
 def plot(data: np.ndarray, grid: Grid, ax=None, label: str=None, figsize=None,
-         cbar=True, vmin=None, vmax=None, cmap=None, projection: bool=True) -> None:
+         cbar=True, vmin=None, vmax=None, cmap=None, project: bool=True) -> None:
         """Simple colorplot for 2-dim data"""
 
         if ax is None:
@@ -16,12 +16,12 @@ def plot(data: np.ndarray, grid: Grid, ax=None, label: str=None, figsize=None,
                 figsize = (x_size, y_size)
             _, ax = plt.subplots(figsize=figsize)
 
-        if projection:
-            X, Y = grid.mesh()
+        if project:
+            X, Y = grid.mesh_edge_cartesian()
             ax.set_xlabel('$x$')
             ax.set_ylabel('$y$')
         else:
-            X, Y = grid.x1, grid.x2
+            X, Y = grid.mesh_edge()
             ax.set_xlabel("${}$".format(grid.mappings_tex['x1']))
             ax.set_ylabel("${}$".format(grid.mappings_tex['x2']))
 
