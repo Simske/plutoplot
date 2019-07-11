@@ -33,9 +33,9 @@ class Simulation:
             self.data_dir = join(sim_dir, 'data')
         else:
             try:
-                from_ini = join(sim_dir, self.ini['Static Grid Output']['output_dir'], 'grid.out')
-                if os.path.exists(from_ini):
-                    self.data_dir = join(sim_dir)
+                from_ini = join(sim_dir, self.ini['Static Grid Output']['output_dir'])
+                if os.path.exists(join(from_ini, 'grid.out')):
+                    self.data_dir = from_ini
                 else:
                     raise FileNotFoundError()
             except FileNotFoundError:
