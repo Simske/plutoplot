@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from .io import Grid
+from .grid import Grid
 
 def plot(data: np.ndarray, grid: Grid, ax=None, label: str=None, figsize=None,
          cbar=True, vmin=None, vmax=None, cmap=None, projection: bool=True) -> None:

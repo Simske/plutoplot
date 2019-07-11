@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from .io import Grid
+from .grid import Grid
 from .plotting import plot
 
 class PlutoData(object):

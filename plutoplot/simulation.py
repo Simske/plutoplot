@@ -7,7 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 # local imports
 from .plutodata import PlutoData
-from .io import Grid, Pluto_ini, Definitions_h, SimulationMetadata
+from .grid import Grid
+from .io import Pluto_ini, Definitions_h, SimulationMetadata
 from .coordinates import generate_coord_mapping, generate_tex_mapping
 
 # warnings.simplefilter("always")
