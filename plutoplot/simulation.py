@@ -237,6 +237,12 @@ class Simulation:
     def plot(self, *args, n: int=-1,  **kwargs) -> None:
         """
         Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()
+        """
+        return self[n].plot(*args, **kwargs)
+
+    def iplot(self, *args, n: int=-1,  **kwargs) -> None:
+        """
+        Plot simulation interactively. All other arguments forwarded to PlutoData.plot()
         No return, because it would interfere with interactive output in Jupyter Notebook
         """
 
@@ -253,8 +259,8 @@ class Simulation:
             plot.children[0].layout.width = "40%"
             display(plot)
 
-        except (NameError, ImportError):
-            self[n].plot(*args, **kwargs)
+        except NameError:
+            raise RuntimeError("Code has to be run in Jupyter Notebook for interactive plotting")
 
     def __len__(self) -> int:
         return self.n
