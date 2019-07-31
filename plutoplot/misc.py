@@ -6,4 +6,5 @@ def cached_property(func):
         except AttributeError:
             setattr(self, cached_name, func(self))
         return getattr(self, cached_name)
+
     return property(wrapper)

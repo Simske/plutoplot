@@ -5,6 +5,7 @@ import warnings
 from typing import Generator, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
+
 # local imports
 from .plutodata import PlutoData
 from .grid import Grid
@@ -13,6 +14,7 @@ from .coordinates import generate_coord_mapping, generate_tex_mapping
 
 # warnings.simplefilter("always")
 
+
 class Simulation:
     """
     Container class for PLUTO (http://plutocode.ph.unito.it/) output.
@@ -20,21 +22,24 @@ class Simulation:
     loads individual files when needed.
     Simulation is subscriptable and iterable.
     """
-    supported_formats = ('dbl', 'flt', 'vtk')
+
+    supported_formats = ("dbl", "flt", "vtk")
     DataObject = PlutoData
 
-    def __init__(self, sim_dir: str='', format: str=None, coordinates: str=None) -> None:
+    def __init__(
+        self, sim_dir: str = "", format: str = None, coordinates: str = None
+    ) -> None:
         self.sim_dir = sim_dir
 
         ## Find data directory ##
-        if os.path.exists(join(sim_dir, 'grid.out')):
+        if os.path.exists(join(sim_dir, "grid.out")):
             self.data_dir = sim_dir
-        elif os.path.exists(join(sim_dir, 'data', 'grid.out')):
-            self.data_dir = join(sim_dir, 'data')
+        elif os.path.exists(join(sim_dir, "data", "grid.out")):
+            self.data_dir = join(sim_dir, "data")
         else:
             try:
-                from_ini = join(sim_dir, self.ini['Static Grid Output']['output_dir'])
-                if os.path.exists(join(from_ini, 'grid.out')):
+                from_ini = join(sim_dir, self.ini["Static Grid Output"]["output_dir"])
+                if os.path.exists(join(from_ini, "grid.out")):
                     self.data_dir = from_ini
                 else:
                     raise FileNotFoundError()
@@ -42,7 +47,7 @@ class Simulation:
                 raise FileNotFoundError("Data directory with gridfile not found")
 
         ## Read grid ##
-        self.grid = Grid(join(self.data_dir, 'grid.out'))
+        self.grid = Grid(join(self.data_dir, "grid.out"))
 
         # dict for individual data frames
         self._data = {}
@@ -50,22 +55,28 @@ class Simulation:
         ## Find data format
         if format is None:
             for f in self.supported_formats:
-                if os.path.exists(join(self.data_dir, f+'.out')):
+                if os.path.exists(join(self.data_dir, f + ".out")):
                     self.format = f
                     break
             try:
                 self.format
             except AttributeError:
-                raise FileNotFoundError("No Metadata file for formats "
-                    "{} found in {}".format(self.supported_formats, self.data_dir))
+                raise FileNotFoundError(
+                    "No Metadata file for formats "
+                    "{} found in {}".format(self.supported_formats, self.data_dir)
+                )
         else:
             if format not in self.supported_formats:
                 raise NotImplementedError("Format '{}' not supported".format(format))
-            if os.path.exists(join(self.data_dir, '{}.out'.format(format))):
+            if os.path.exists(join(self.data_dir, "{}.out".format(format))):
                 self.format = format
             else:
-                raise FileNotFoundError("Metadata file {} "
-                "for format {} not found".format(join(self.data_dir, format+'.out'), format))
+                raise FileNotFoundError(
+                    "Metadata file {} "
+                    "for format {} not found".format(
+                        join(self.data_dir, format + ".out"), format
+                    )
+                )
 
         ## Read metadata ##
         self.metadata = SimulationMetadata(join(self.data_dir), self.format)
@@ -73,11 +84,13 @@ class Simulation:
 
         ## Read grid coordinate system ##
         if coordinates is None:
-            coordinates = self.definitions['geometry']
+            coordinates = self.definitions["geometry"]
 
-        self.grid.set_coordinate_system(coordinates,
-                                        mappings=generate_coord_mapping(coordinates),
-                                        mappings_tex=generate_tex_mapping(coordinates))
+        self.grid.set_coordinate_system(
+            coordinates,
+            mappings=generate_coord_mapping(coordinates),
+            mappings_tex=generate_tex_mapping(coordinates),
+        )
 
     @property
     def ini(self) -> Pluto_ini:
@@ -85,7 +98,7 @@ class Simulation:
         try:
             return self._ini
         except AttributeError:
-            self._ini = Pluto_ini(join(self.sim_dir, 'pluto.ini'))
+            self._ini = Pluto_ini(join(self.sim_dir, "pluto.ini"))
             return self._ini
 
     @property
@@ -94,7 +107,7 @@ class Simulation:
         try:
             return self._definitions
         except AttributeError:
-            self._definitions = Definitions_h(join(self.sim_dir, 'definitions.h'))
+            self._definitions = Definitions_h(join(self.sim_dir, "definitions.h"))
             return self._definitions
 
     def __getattr__(self, name):
@@ -103,18 +116,18 @@ class Simulation:
 
         # metadata
         try:
-            return getattr(getattribute(self, 'metadata'), name)
+            return getattr(getattribute(self, "metadata"), name)
         except:
             pass
 
         # grid
-        grid = getattribute(self, 'grid')
+        grid = getattribute(self, "grid")
         try:
             return getattr(grid, name)
         except AttributeError:
             pass
         try:
-            return getattribute(grid, 'mappings')[name]
+            return getattribute(grid, "mappings")[name]
         except KeyError:
             pass
 
@@ -146,7 +159,7 @@ class Simulation:
         """
         return self.get(key)
 
-    def get(self, key: int, keep: bool=True) -> DataObject:
+    def get(self, key: int, keep: bool = True) -> DataObject:
         """
         Access individual data frames, return them as PlutoData
         If file is already loaded, object is returned, otherwise data is loaded and returned
@@ -171,7 +184,9 @@ class Simulation:
         """Iterate over all data frames"""
         return self.iter()
 
-    def iter(self, start: int=0, stop: int=None, step: int=1, memory_keep: bool=False) -> Generator[DataObject, None, None]:
+    def iter(
+        self, start: int = 0, stop: int = None, step: int = 1, memory_keep: bool = False
+    ) -> Generator[DataObject, None, None]:
         """
         Iterate over data frames in range, (or all).
         start, stop, step [int]: works like range (start inclusive, stop exclusive)
@@ -182,11 +197,14 @@ class Simulation:
         for i in range(start, stop, step):
             yield self.get(i, memory_keep)
 
-    def memory_iter(self, start=0, stop=-1, step=1) -> Generator[DataObject, None, None]:
+    def memory_iter(
+        self, start=0, stop=-1, step=1
+    ) -> Generator[DataObject, None, None]:
         """Deprecated, use Simulation.iter() instead"""
         warnings.warn(
             "plutoplot.Simulation.memory_iter() is deprecated, use plutoplot.Simulation.iter()",
-            DeprecationWarning)
+            DeprecationWarning,
+        )
         return self.iter()
 
     def reduce(self, func, dtype=None):
@@ -234,13 +252,13 @@ class Simulation:
                 res[i] = d
         return res
 
-    def plot(self, *args, n: int=-1,  **kwargs) -> None:
+    def plot(self, *args, n: int = -1, **kwargs) -> None:
         """
         Plot last data file, or data file n. All other arguments forwarded to PlutoData.plot()
         """
         return self[n].plot(*args, **kwargs)
 
-    def iplot(self, *args, n: int=-1,  **kwargs) -> None:
+    def iplot(self, *args, n: int = -1, **kwargs) -> None:
         """
         Plot simulation interactively. All other arguments forwarded to PlutoData.plot()
         No return, because it would interfere with interactive output in Jupyter Notebook
@@ -250,17 +268,22 @@ class Simulation:
         try:
             get_ipython
             import ipywidgets as widgets
+
             def handler(i):
                 self[i].plot(*args, **kwargs)
-            plot = widgets.interactive(handler, i=widgets.IntSlider(min=0,
-                                                         max=len(self)-1,
-                                                         value=self._index(n)))
+
+            plot = widgets.interactive(
+                handler,
+                i=widgets.IntSlider(min=0, max=len(self) - 1, value=self._index(n)),
+            )
             plot.children[0].description = "Simulation frame"
             plot.children[0].layout.width = "40%"
             display(plot)
 
         except NameError:
-            raise RuntimeError("Code has to be run in Jupyter Notebook for interactive plotting")
+            raise RuntimeError(
+                "Code has to be run in Jupyter Notebook for interactive plotting"
+            )
 
     def __len__(self) -> int:
         return self.n
@@ -278,18 +301,25 @@ class Simulation:
         data_dir: '{data_dir}'
 resolution: {dims}, {coord} coordinates
 data files: {n}, last time: {t}
-Variables: {self.vars}""".format(sim_dir=self.sim_dir, data_dir=self.data_dir,
-        dims=self.dims, coord=self.grid.coordinates, n=self.n, t=self.t[-1],
-        vars=self.vars)
+Variables: {self.vars}""".format(
+            sim_dir=self.sim_dir,
+            data_dir=self.data_dir,
+            dims=self.dims,
+            coord=self.grid.coordinates,
+            n=self.n,
+            t=self.t[-1],
+            vars=self.vars,
+        )
 
     def __repr__(self) -> str:
         return "Simulation('{sim_dir}', format='{format}', coordinates='{coord}')".format(
-            sim_dir=self.sim_dir, format=self.format, coord=self.grid.coordinates)
+            sim_dir=self.sim_dir, format=self.format, coord=self.grid.coordinates
+        )
 
     def __dir__(self) -> list:
         return object.__dir__(self) + self.vars + dir(self.metadata) + dir(self.grid)
 
-    def minmax(self, var: str='rho', range_: tuple=()) -> Tuple[float, float]:
+    def minmax(self, var: str = "rho", range_: tuple = ()) -> Tuple[float, float]:
         """
         Calculate minimum and maximum of var for sequence.
         var: pluto variable name
@@ -300,6 +330,8 @@ Variables: {self.vars}""".format(sim_dir=self.sim_dir, data_dir=self.data_dir,
         for frame in self.iter(*range_):
             temp_min = np.min(getattr(frame, var))
             temp_max = np.max(getattr(frame, var))
-            if temp_min < min_: min_ = temp_min
-            if temp_max > max_: max_ = temp_max
+            if temp_min < min_:
+                min_ = temp_min
+            if temp_max > max_:
+                max_ = temp_max
         return min_, max_

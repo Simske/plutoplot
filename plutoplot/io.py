@@ -4,23 +4,24 @@ from itertools import zip_longest
 from os.path import join
 
 
-
 class SimulationMetadata:
     def __init__(self, data_dir, format) -> None:
-        self.read_vars(join(data_dir, '{}.out'.format(format)), format)
+        self.read_vars(join(data_dir, "{}.out".format(format)), format)
 
         # read VTK offsets in file
-        if format == 'vtk':
-            if self.file_mode == 'single':
-                self.vtk_offsets = vtk_offsets(join(data_dir, 'data.0000.vtk'))
+        if format == "vtk":
+            if self.file_mode == "single":
+                self.vtk_offsets = vtk_offsets(join(data_dir, "data.0000.vtk"))
             else:
                 self.vtk_offsets = {}
                 for var in self.vars:
-                    self.vtk_offsets.update(vtk_offsets(join(data_dir, '{}.0000.vtk'.format(var))))
+                    self.vtk_offsets.update(
+                        vtk_offsets(join(data_dir, "{}.0000.vtk".format(var)))
+                    )
 
     def read_vars(self, path, format) -> None:
         """Read simulation step data and written variables"""
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             lines = f.readlines()
             self.n = len(lines)
             # prepare arrays
@@ -33,43 +34,46 @@ class SimulationMetadata:
             for i, line in enumerate(lines):
                 self.t[i], self.dt[i], self.nstep[i] = line.split()[1:4]
 
-            if file_mode == 'single_file':
-                self.file_mode = 'single'
-            elif file_mode == 'multiple_files':
-                self.file_mode = 'multiple'
+            if file_mode == "single_file":
+                self.file_mode = "single"
+            elif file_mode == "multiple_files":
+                self.file_mode = "multiple"
 
-            self.charsize = 8 if format == 'dbl' else 4
-            endianness = '<' if endianness == 'little' else '>'
-            if format == 'vtk': endianness = '>' # VTK has always big endian
+            self.charsize = 8 if format == "dbl" else 4
+            endianness = "<" if endianness == "little" else ">"
+            if format == "vtk":
+                endianness = ">"  # VTK has always big endian
             self.binformat = "{}f{}".format(endianness, self.charsize)
+
 
 def vtk_offsets(filename) -> dict:
     """
     Read positions of vars in VTK legacy file
     """
     offsets = {}
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         for l in f:
-            if not l or l == b'\n':
+            if not l or l == b"\n":
                 continue
 
             split = l.split()
 
             # skip coordinates (read in via gridfile)
-            if split[0] in [i + b'_COORDINATES' for i in [b"X", b"Y", b"Z",]]:
+            if split[0] in [i + b"_COORDINATES" for i in [b"X", b"Y", b"Z"]]:
                 f.seek(int(split[1]) * 4 + 1, 1)
 
-            if split[0] == b'CELL_DATA':
+            if split[0] == b"CELL_DATA":
                 bytesize = int(split[1]) * 4
 
             # save position of variables
-            if split[0] == b'SCALARS':
+            if split[0] == b"SCALARS":
                 var = split[1].decode()
-                f.readline() # skip "LOOKUP_TABLE"
+                f.readline()  # skip "LOOKUP_TABLE"
                 offsets[var] = f.tell()
                 f.seek(bytesize, 1)
 
     return offsets
+
 
 class Pluto_ini(OrderedDict):
     """Parser for Plutocode initialization file pluto.ini"""
@@ -95,7 +99,6 @@ class Pluto_ini(OrderedDict):
                 out += "{}{}\n".format(rpad([key], colwidth), lpad(value, colwidth[1:]))
             return out
 
-
     def __init__(self, path):
         super().__init__()
         self.path = path
@@ -104,7 +107,7 @@ class Pluto_ini(OrderedDict):
 
     def parse(self, txt=None):
         if txt is None:
-            with open(self.path, 'r') as f:
+            with open(self.path, "r") as f:
                 lines = [l.strip() for l in f.readlines()]
         else:
             lines = [l.strip() for l in txt.split("\n")]
@@ -113,7 +116,7 @@ class Pluto_ini(OrderedDict):
         for line in lines:
             if not line:
                 continue
-            elif line[0] == '[' and line[-1] == ']':
+            elif line[0] == "[" and line[-1] == "]":
                 section = line[1:-1]
                 self[section] = self.Section(section)
             else:
@@ -133,7 +136,7 @@ class Pluto_ini(OrderedDict):
         if path is None:
             path = self.path
 
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             f.write(str(self))
 
 
@@ -145,6 +148,7 @@ def rpad(text, colwidth):
         pad = col - len(txt) + 1
         out += txt + " " * pad
     return out
+
 
 def lpad(text, colwidth, spacer=2):
     if isinstance(text, str):
@@ -158,28 +162,54 @@ def lpad(text, colwidth, spacer=2):
 
 class Definitions_h(OrderedDict):
 
-    base_opt = ['physics', 'dimensions', 'components', 'geometry', 'body_force',
-                'forced_turb', 'cooling', 'reconstruction', 'time_stepping',
-                'dimensional_splitting', 'ntracer', 'user_def_parameters']
-    physics_dep = {'hd': ['eos', 'entropy_switch', 'thermal_conduction', 'viscosity', 'rotating_frame'],
-                   'rhd': ['eos', 'entropy_switch'],
-                   'mhd': ['eos', 'entropy_switch', 'divb_control', 'background_field',
-                           'ambipolar_diffusion', 'resistivity', 'hall_mhd',
-                           'thermal_conduction', 'viscosity', 'rotating_frame'],
-                   'rmhd': ['eos', 'entropy_switch', 'divb_control', 'resistivity'],
-                   'cr_transport': ['eos', 'anisotropy'],
-                   'advection': []}
-
+    base_opt = [
+        "physics",
+        "dimensions",
+        "components",
+        "geometry",
+        "body_force",
+        "forced_turb",
+        "cooling",
+        "reconstruction",
+        "time_stepping",
+        "dimensional_splitting",
+        "ntracer",
+        "user_def_parameters",
+    ]
+    physics_dep = {
+        "hd": [
+            "eos",
+            "entropy_switch",
+            "thermal_conduction",
+            "viscosity",
+            "rotating_frame",
+        ],
+        "rhd": ["eos", "entropy_switch"],
+        "mhd": [
+            "eos",
+            "entropy_switch",
+            "divb_control",
+            "background_field",
+            "ambipolar_diffusion",
+            "resistivity",
+            "hall_mhd",
+            "thermal_conduction",
+            "viscosity",
+            "rotating_frame",
+        ],
+        "rmhd": ["eos", "entropy_switch", "divb_control", "resistivity"],
+        "cr_transport": ["eos", "anisotropy"],
+        "advection": [],
+    }
 
     def __init__(self, path: str):
         super().__init__()
         self.path = path
         self.parse()
 
-    def parse(self, txt: str=None) -> None:
-        with open(self.path, 'r') as f:
+    def parse(self, txt: str = None) -> None:
+        with open(self.path, "r") as f:
             lines = [l.strip() for l in f.readlines()]
-
 
         for line in lines:
             if not line:
