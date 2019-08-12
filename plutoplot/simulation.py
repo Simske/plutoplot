@@ -112,26 +112,20 @@ class Simulation:
 
     def __getattr__(self, name):
         """Resolve attributes to metadata/data/grid attributes"""
-        getattribute = object.__getattribute__
 
         if name.startswith("_"):
             raise AttributeError("{} has no attribute '{}'".format(type(self), name))
 
         # metadata
         try:
-            return getattr(getattribute(self, "metadata"), name)
+            return getattr(self.metadata, name)
         except:
             pass
 
         # grid
-        grid = getattribute(self, "grid")
         try:
-            return getattr(grid, name)
+            return getattr(self.grid, name)
         except AttributeError:
-            pass
-        try:
-            return getattribute(grid, "mappings")[name]
-        except KeyError:
             pass
 
         # vars
