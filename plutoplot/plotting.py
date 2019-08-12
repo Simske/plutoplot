@@ -27,7 +27,7 @@ def plot(
             figsize = (x_size, y_size)
         _, ax = plt.subplots(figsize=figsize)
 
-    if project:
+    if projection:
         X, Y = grid.mesh_edge_cartesian()
         ax.set_xlabel("$x$")
         ax.set_ylabel("$y$")
