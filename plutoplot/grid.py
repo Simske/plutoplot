@@ -98,8 +98,7 @@ class Grid:
 
     def __getattr__(self, name):
         try:
-            mappings = object.__getattribute__(self, "mappings")
-            return object.__getattribute__(self, mappings[name])
+            return getattr(self, self.mappings[name])
         except KeyError:
             raise AttributeError("{} has no attribute '{}'".format(type(self), name))
 

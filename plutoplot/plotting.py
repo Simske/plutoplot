@@ -16,7 +16,7 @@ def plot(
     vmin=None,
     vmax=None,
     cmap=None,
-    project: bool = True,
+    projection: bool = True,
 ) -> None:
     """Simple colorplot for 2-dim data"""
 

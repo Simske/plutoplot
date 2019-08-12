@@ -2,6 +2,14 @@ import numpy as np
 
 
 def generate_coord_mapping(coordinates: str) -> dict:
+    """
+    Generate variable name mapping for specified coordinate system.
+    E.g. `phi` gets mapped to `x2` for polar coordinates, and to `x3` for spherical coordinates.
+    Implements maping for all coordinates (cell edges and centers) as well as
+    velocity components.
+
+    coordinates: str from {'cartesian', 'polar', 'cylindrical', 'spherical'}
+    """
     mappings = {
         "cartesian": {"x": "x1", "y": "x2", "z": "x3"},
         "polar": {"r": "x1", "phi": "x2", "z": "x2"},
@@ -27,6 +35,10 @@ def generate_coord_mapping(coordinates: str) -> dict:
 
 
 def generate_tex_mapping(coordinates: str) -> dict:
+    """
+    Generate latex variable mapping in coordinate system
+    for correct axis labels in plots.
+    """
     mappings = {
         "cartesian": {"x1": "x", "x2": "y", "x3": "z"},
         "cylindrical": {"x1": "r", "x2": "z"},
@@ -43,7 +55,7 @@ def generate_tex_mapping(coordinates: str) -> dict:
         velocities["v" + key] = "v_" + value
     mapping.update(velocities)
     mapping["rho"] = r"\rho"
-    mapping["prs"] = "p"
+    mapping["prs"] = "P"
     return mapping
 
 
