@@ -96,7 +96,9 @@ class Grid:
         """
         return transform_mesh(self.coordinates, *self.mesh_edge())
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
+        if name.startswith("_"):
+            raise AttributeError("{} has no attribute '{}'".format(type(self), name))
         try:
             return getattr(self, self.mappings[name])
         except KeyError:

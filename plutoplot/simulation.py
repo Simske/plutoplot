@@ -114,6 +114,9 @@ class Simulation:
         """Resolve attributes to metadata/data/grid attributes"""
         getattribute = object.__getattribute__
 
+        if name.startswith("_"):
+            raise AttributeError("{} has no attribute '{}'".format(type(self), name))
+
         # metadata
         try:
             return getattr(getattribute(self, "metadata"), name)

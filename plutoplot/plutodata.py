@@ -37,9 +37,11 @@ class PlutoData(object):
 
     def __getattr__(self, name):
         """Get grid/data attributes from corresponding dict, or load it"""
+        getattribute = object.__getattribute__
+        if name.startswith("_"):
+            raise AttributeError("{} has no attribute '{}'".format(type(self), name))
         # normal attributes
         # grid
-        getattribute = object.__getattribute__
         grid = getattribute(self, "grid")
         try:
             return getattr(grid, name)
