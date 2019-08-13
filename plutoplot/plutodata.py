@@ -120,7 +120,7 @@ class PlutoData(object):
         except KeyError:
             return coord
 
-    def plot(self, var=None, grid=None, **kwargs):
+    def plot(self, var=None, grid=None, label: str = None, **kwargs):
         if var is None:
             var = self.vars[0]
         if isinstance(var, str):
@@ -131,10 +131,13 @@ class PlutoData(object):
         if grid is None:
             grid = self.grid
 
+        if label is None:
+            label="${}$".format(self.grid.mappings_tex.get(varname, varname))
+
         return plot(
             var,
             grid,
-            label="${}$".format(self.grid.mappings_tex.get(varname, varname)),
+            label=label,
             **kwargs
         )
 
