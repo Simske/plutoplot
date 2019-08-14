@@ -33,8 +33,8 @@ def plot(
         ax.set_ylabel("$y$")
     else:
         X, Y = grid.mesh_edge()
-        ax.set_xlabel("${}$".format(grid.mappings_tex["x1"]))
-        ax.set_ylabel("${}$".format(grid.mappings_tex["x2"]))
+        ax.set_xlabel("${}$".format(grid.mapping_tex["x1"]))
+        ax.set_ylabel("${}$".format(grid.mapping_tex["x2"]))
 
     im = ax.pcolormesh(X, Y, data, vmin=vmin, vmax=vmax, cmap=cmap)
     ax.set_aspect(1)

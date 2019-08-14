@@ -138,7 +138,7 @@ class PlutoData(object):
             grid = self.grid
 
         if label is None:
-            label = "${}$".format(self.grid.mappings_tex.get(varname, varname))
+            label = "${}$".format(self.grid.mapping_tex.get(varname, varname))
 
         return plot(var, grid, label=label, **kwargs)
 
