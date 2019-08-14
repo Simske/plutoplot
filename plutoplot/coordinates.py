@@ -1,7 +1,13 @@
 import numpy as np
 
+mapping_coordinates = {
+    "cartesian": {"x": "x1", "y": "x2", "z": "x3"},
+    "polar": {"r": "x1", "phi": "x2", "z": "x2"},
+    "cylindrical": {"r": "x1", "z": "x3"},
+    "spherical": {"r": "x1", "theta": "x2", "phi": "x3"},
+}
 
-def generate_coord_mapping(coordinates: str) -> dict:
+def mapping_grid(coordinates: str) -> dict:
     """
     Generate variable name mapping for specified coordinate system.
     E.g. `phi` gets mapped to `x2` for polar coordinates, and to `x3` for spherical coordinates.
@@ -10,48 +16,38 @@ def generate_coord_mapping(coordinates: str) -> dict:
 
     coordinates: str from {'cartesian', 'polar', 'cylindrical', 'spherical'}
     """
-    mappings = {
-        "cartesian": {"x": "x1", "y": "x2", "z": "x3"},
-        "polar": {"r": "x1", "phi": "x2", "z": "x2"},
-        "cylindrical": {"r": "x1", "z": "x3"},
-        "spherical": {"r": "x1", "theta": "x2", "phi": "x3"},
-    }
-    if coordinates not in mappings:
+    if coordinates not in mapping_coordinates:
         raise NotImplementedError(
             "Coordinate system {} not implemented".format(coordinates)
         )
-    mapping = mappings[coordinates]
+    mapping = mapping_coordinates[coordinates].copy()
     grid_mappings = {}
     for key, value in mapping.items():
         grid_mappings[key + "l"] = value + "l"
         grid_mappings[key + "r"] = value + "r"
         grid_mappings["d" + key] = "d" + value
-    velocities = {}
-    for key, value in mapping.items():
-        velocities["v" + key] = "v" + value
     mapping.update(grid_mappings)
-    mapping.update(velocities)
     return mapping
 
+def mapping_vars(coordinates: str) -> dict:
+    if coordinates not in mapping_coordinates:
+        raise NotImplementedError(
+            "Coordinate system {} not implemented".format(coordinates)
+        )
+    return {'v'+key: 'v'+value for key, value in mapping_coordinates[coordinates].items()}
 
-def generate_tex_mapping(coordinates: str) -> dict:
+def mapping_tex(coordinates: str) -> dict:
     """
     Generate latex variable mapping in coordinate system
     for correct axis labels in plots.
     """
-    mappings = {
-        "cartesian": {"x1": "x", "x2": "y", "x3": "z"},
-        "cylindrical": {"x1": "r", "x2": "z"},
-        "polar": {"x1": "r", "x2": r"\phi", "x3": "z"},
-        "spherical": {"x1": "r", "x2": r"\theta", "x3": r"\phi"},
-    }
-    if coordinates not in mappings:
+    if coordinates not in mapping_coordinates:
         raise NotImplementedError(
             "Tex mappings for {} not implemented".format(coordinates)
         )
-    mapping = mappings[coordinates]
+    mapping = mapping_coordinates[coordinates].copy()
     velocities = {}
-    for key, value in mapping:
+    for key, value in mapping.items():
         velocities["v" + key] = "v_" + value
     mapping.update(velocities)
     mapping["rho"] = r"\rho"

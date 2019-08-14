@@ -1,6 +1,7 @@
 import numpy as np
 
-from .coordinates import transform_mesh
+from .coordinates import (mapping_grid, mapping_vars, mapping_tex,
+                          transform_mesh)
 
 
 class Grid:
@@ -10,16 +11,21 @@ class Grid:
     size: total cells
     """
 
-    def __init__(self, gridfile):
-        self.coordinates = None
-        self.mappings = {}
-        self.mappings_tex = {}
+    def __init__(self, gridfile, coordinates: str = None):
+        self.coordinates = coordinates
+        self.mapping_grid = {}
+        self.mapping_vars = {}
+        self.mapping_tex = {}
+
+        if self.coordinates is not None:
+            self.set_coordinate_system(coordinates)
+
         self.read_gridfile(gridfile)
 
-    def set_coordinate_system(self, coordinates, mappings={}, mappings_tex={}):
-        self.coordinates = coordinates
-        self.mappings = mappings
-        self.mappings_tex = mappings_tex
+    def set_coordinate_system(self, coordinates):
+        self.mapping_grid = mapping_grid(coordinates)
+        self.mapping_vars = mapping_vars(coordinates)
+        self.mapping_tex = mapping_tex(coordinates)
 
     def read_gridfile(self, gridfile_path) -> None:
         # to be filled with left and right cell interfaces
@@ -100,7 +106,7 @@ class Grid:
         if name.startswith("_"):
             raise AttributeError("{} has no attribute '{}'".format(type(self), name))
         try:
-            return getattr(self, self.mappings[name])
+            return getattr(self, self.mapping_grid[name])
         except KeyError:
             raise AttributeError("{} has no attribute '{}'".format(type(self), name))
 

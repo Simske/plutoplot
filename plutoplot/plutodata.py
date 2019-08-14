@@ -53,6 +53,12 @@ class PlutoData(object):
             if name in self.vars:
                 self._load_var(name)
                 return self.data[name]
+
+        try:
+            return getattr(self, self.grid.mapping_vars[name])
+        except KeyError:
+            pass
+
         # simulation
         try:
             return getattr(self.simulation, name)

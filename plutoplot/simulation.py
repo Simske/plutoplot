@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from .plutodata import PlutoData
 from .grid import Grid
 from .io import Pluto_ini, Definitions_h, SimulationMetadata
-from .coordinates import generate_coord_mapping, generate_tex_mapping
 
 # warnings.simplefilter("always")
 
@@ -45,9 +44,6 @@ class Simulation:
                     raise FileNotFoundError()
             except FileNotFoundError:
                 raise FileNotFoundError("Data directory with gridfile not found")
-
-        ## Read grid ##
-        self.grid = Grid(join(self.data_dir, "grid.out"))
 
         # dict for individual data frames
         self._data = {}
@@ -86,11 +82,8 @@ class Simulation:
         if coordinates is None:
             coordinates = self.definitions["geometry"]
 
-        self.grid.set_coordinate_system(
-            coordinates,
-            mappings=generate_coord_mapping(coordinates),
-            mappings_tex=generate_tex_mapping(coordinates),
-        )
+        ## Read grid ##
+        self.grid = Grid(join(self.data_dir, "grid.out"), coordinates)
 
     @property
     def ini(self) -> Pluto_ini:
@@ -133,7 +126,11 @@ class Simulation:
             if name in self.vars:
                 return getattr(self[-1], name)
         except AttributeError:
-            raise
+            pass
+        try:
+            return getattr(self[-1], self.grid.mapping_vars[name])
+        except KeyError:
+            pass
 
         raise AttributeError("{} has no attribute '{}'".format(type(self), name))
 
