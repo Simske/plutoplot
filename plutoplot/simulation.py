@@ -311,7 +311,13 @@ Variables: {self.vars}""".format(
         )
 
     def __dir__(self) -> list:
-        return object.__dir__(self) + self.vars + dir(self.metadata) + dir(self.grid)
+        return (
+            object.__dir__(self)
+            + self.vars
+            + list(filter(lambda x: not x.startswith("_"), dir(self.metadata)))
+            + list(filter(lambda x: not x.startswith("_"), dir(self.grid)))
+            + list(self.grid.mapping_vars)
+        )
 
     def minmax(self, var: str = "rho", range_: tuple = ()) -> Tuple[float, float]:
         """

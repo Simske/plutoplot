@@ -138,14 +138,9 @@ class PlutoData(object):
             grid = self.grid
 
         if label is None:
-            label="${}$".format(self.grid.mappings_tex.get(varname, varname))
+            label = "${}$".format(self.grid.mappings_tex.get(varname, varname))
 
-        return plot(
-            var,
-            grid,
-            label=label,
-            **kwargs
-        )
+        return plot(var, grid, label=label, **kwargs)
 
     def __str__(self) -> None:
         return """PlutoData, wdir: '{wdir}'
@@ -167,4 +162,9 @@ Variables: {vars}""".format(
         )
 
     def __dir__(self) -> list:
-        return object.__dir__(self) + self.vars + list(self.grid.keys())
+        return (
+            object.__dir__(self)
+            + self.vars
+            + list(filter(lambda x: not x.startswith("_"), dir(self.grid)))
+            + list(self.grid.mapping_vars)
+        )

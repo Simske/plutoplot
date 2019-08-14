@@ -114,3 +114,6 @@ class Grid:
         return "PLUTO Grid, Dimensions {}".format(self.dims)
 
     __repr__ = __str__
+
+    def __dir__(self):
+        return object.__dir__(self) + list(self.mapping_grid.keys())
