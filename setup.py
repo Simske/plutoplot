@@ -1,9 +1,8 @@
 from setuptools import setup
-from plutoplot import __version__
+import versioneer
 
 setup(
     name="plutoplot",
-    version=__version__,
     packages=['plutoplot'],
     install_requires=[
         'numpy',
@@ -13,5 +12,8 @@ setup(
         'console_scripts': [
             'pluto-format-ini = plutoplot.scripts:format_ini'
         ]
-    }
+    },
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
+
 )
