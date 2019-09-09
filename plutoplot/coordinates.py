@@ -2,8 +2,8 @@ import numpy as np
 
 mapping_coordinates = {
     "cartesian": {"x": "x1", "y": "x2", "z": "x3"},
-    "polar": {"r": "x1", "phi": "x2", "z": "x2"},
-    "cylindrical": {"r": "x1", "z": "x3"},
+    "polar": {"r": "x1", "phi": "x2", "z": "x3"},
+    "cylindrical": {"r": "x1", "z": "x2"},
     "spherical": {"r": "x1", "theta": "x2", "phi": "x3"},
 }
 
@@ -36,22 +36,35 @@ def mapping_vars(coordinates: str) -> dict:
         )
     return {'v'+key: 'v'+value for key, value in mapping_coordinates[coordinates].items()}
 
+tex_mapping = {
+    'theta': r"\theta",
+    'rho': r"\rho",
+    'phi': r"\phi",
+    'prs': "P"
+}
+
 def mapping_tex(coordinates: str) -> dict:
     """
     Generate latex variable mapping in coordinate system
     for correct axis labels in plots.
+    !! TODO: magnetic components
     """
     if coordinates not in mapping_coordinates:
         raise NotImplementedError(
             "Tex mappings for {} not implemented".format(coordinates)
         )
-    mapping = mapping_coordinates[coordinates].copy()
-    velocities = {}
+    # invert coordinate mapping map, because x1 needs to become named variable
+    mapping = { value: tex_mapping.get(key, key) for key, value in mapping_coordinates[coordinates].items() }
+
+    vel = {}
     for key, value in mapping.items():
-        velocities["v" + key] = "v_" + value
-    mapping.update(velocities)
-    mapping["rho"] = r"\rho"
-    mapping["prs"] = "P"
+        vel['v' + key] = 'v_{}'.format(value)
+    mapping.update(vel)
+
+    for key in ('rho', 'prs'):
+        mapping[key] = tex_mapping.get(key, key)
+
+
     return mapping
 
 
