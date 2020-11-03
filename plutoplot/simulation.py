@@ -136,7 +136,7 @@ class Simulation:
 
     def _index(self, key: int) -> int:
         """Checks if index is in range and implements negative indexing"""
-        if not isinstance(key, int):
+        if not isinstance(key, (int, np.integer)):
             raise IndexError("Data index has to be int")
         elif key >= self.n:
             raise IndexError("Data index out of range")
