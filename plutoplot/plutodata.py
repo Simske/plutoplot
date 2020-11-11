@@ -40,12 +40,6 @@ class PlutoData(object):
         if name.startswith("_"):
             raise AttributeError("{} has no attribute '{}'".format(type(self), name))
 
-        # grid
-        try:
-            return getattr(self.grid, name)
-        except AttributeError:
-            pass
-
         # data
         try:
             return self.data[name]
@@ -53,6 +47,12 @@ class PlutoData(object):
             if name in self.vars:
                 self._load_var(name)
                 return self.data[name]
+
+        # grid
+        try:
+            return getattr(self.grid, name)
+        except AttributeError:
+            pass
 
         try:
             return getattr(self, self.grid.mapping_vars[name])
@@ -66,6 +66,14 @@ class PlutoData(object):
             pass
 
         raise AttributeError("{} has no attribute '{}'".format(type(self), name))
+
+    def __delattr__(self, name):
+        """Only allows to delete elements from the data dict to free memory"""
+        try:
+            del self.data[name]
+        except KeyError:
+            if name not in self.vars:
+                raise RuntimeError("Only data variables are allowed to be deleted")
 
     def _load_var(self, var):
         """Load data for var into memory. Read either var dbl file (multiple_files mode),
@@ -97,7 +105,6 @@ class PlutoData(object):
                 shape=self.data_shape,
             ),
         )
-        setattr(self, var, self.data[var])
 
     def _post_load_process(self, varname, data):
         """
