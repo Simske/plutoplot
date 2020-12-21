@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 
 from .coordinates import (mapping_grid, mapping_vars, mapping_tex,
                           transform_mesh)
@@ -11,7 +12,7 @@ class Grid:
     size: total cells
     """
 
-    def __init__(self, gridfile, coordinates: str = None):
+    def __init__(self, gridfile: Path, coordinates: str = None):
         self.coordinates = coordinates
         self.mapping_grid = {}
         self.mapping_vars = {}
@@ -31,7 +32,7 @@ class Grid:
         # to be filled with left and right cell interfaces
         x = []
         dims = []
-        with open(gridfile_path, "r") as gf:
+        with gridfile_path.open() as gf:
             # read all dimensions
             while True:
                 # read line by line, stop if EOF

@@ -1,6 +1,8 @@
 import multiprocessing
 import os
 import subprocess
+from pathlib import Path
+import shutil
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +15,7 @@ from .simulation import Simulation
 def parameter_generator(
     sim: Simulation,
     plot_func,
-    output_path,
+    output_path: Path,
     plot_args: dict = {"vmin": None, "vmax": None},
     save_args: dict = {"bbox_inches": "tight"},
 ):
@@ -32,7 +34,7 @@ def generate_frame(args):
 def render_frames_parallel(
     sim: Simulation,
     plot_func,
-    output_path: str = "",
+    output_path: Path = "",
     plot_args: dict = {"vmin": None, "vmax": None},
     save_args: dict = {"bbox_inches": "tight"},
     verbose=True,
@@ -60,14 +62,15 @@ def render_frames_parallel(
 def generate_animation(
     sim: Simulation,
     plot_func,
-    output_name: str = "animation.mp4",
+    output_name: Path = "animation.mp4",
     framerate: int = 25,
     plot_args: dict = {"vmin": None, "vmax": None},
     save_args: dict = {"bbox_inches": "tight"},
     verbose=True,
 ):
-    os.mkdir("tmp")
-    render_frames_parallel(sim, plot_func, "tmp/", plot_args, save_args, verbose=True)
+    tmpdir = Path("tmp_frames")
+    tmpdir.mkdir()
+    render_frames_parallel(sim, plot_func, tmpdir, plot_args, save_args, verbose=True)
     subprocess.run(
         [
             "ffmpeg",
@@ -78,7 +81,7 @@ def generate_animation(
             "-framerate",
             "{:d}".format(framerate),
             "-i",
-            "tmp/%04d.png",
+            str(tmpdir / "%04d.png"),
             "-shortest",
             "-c:v",
             "libx264",
@@ -89,4 +92,4 @@ def generate_animation(
             output_name,
         ]
     )
-    subprocess.run(["rm", "-r", "tmp"])
+    shutil.rmtree(tmpdir)

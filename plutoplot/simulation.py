@@ -1,10 +1,10 @@
 import os
-from os.path import join
 import multiprocessing
 import warnings
 from typing import Generator, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 # local imports
 from .plutodata import PlutoData
@@ -26,19 +26,19 @@ class Simulation:
     DataObject = PlutoData
 
     def __init__(
-        self, sim_dir: str = "", format: str = None, coordinates: str = None
+        self, sim_dir: Path = ".", format: str = None, coordinates: str = None
     ) -> None:
-        self.sim_dir = sim_dir
+        self.sim_dir = Path(sim_dir)
 
         ## Find data directory ##
-        if os.path.exists(join(sim_dir, "grid.out")):
-            self.data_dir = sim_dir
-        elif os.path.exists(join(sim_dir, "data", "grid.out")):
-            self.data_dir = join(sim_dir, "data")
+        if (self.sim_dir / "grid.out").exists():
+            self.data_dir = self.sim_dir
+        elif (self.sim_dir / "data" / "grid.out").exists():
+            self.data_dir = self.sim_dir / "data"
         else:
             try:
-                from_ini = join(sim_dir, self.ini["Static Grid Output"]["output_dir"])
-                if os.path.exists(join(from_ini, "grid.out")):
+                from_ini = self.sim_dir / self.ini["Static Grid Output"]["output_dir"]
+                if (from_ini / "grid.out").exists():
                     self.data_dir = from_ini
                 else:
                     raise FileNotFoundError()
@@ -51,7 +51,7 @@ class Simulation:
         ## Find data format
         if format is None:
             for f in self.supported_formats:
-                if os.path.exists(join(self.data_dir, f + ".out")):
+                if (self.data_dir / f).with_suffix(".out").exists():
                     self.format = f
                     break
             try:
@@ -64,18 +64,18 @@ class Simulation:
         else:
             if format not in self.supported_formats:
                 raise NotImplementedError("Format '{}' not supported".format(format))
-            if os.path.exists(join(self.data_dir, "{}.out".format(format))):
+            if (self.data_dir / format).with_suffix(".out").exists():
                 self.format = format
             else:
                 raise FileNotFoundError(
                     "Metadata file {} "
                     "for format {} not found".format(
-                        join(self.data_dir, format + ".out"), format
+                        (self.data_dir / format).with_suffix(".out"), format
                     )
                 )
 
         ## Read metadata ##
-        self.metadata = SimulationMetadata(join(self.data_dir), self.format)
+        self.metadata = SimulationMetadata(self.data_dir, self.format)
         self.vars = self.metadata.vars
 
         ## Read grid coordinate system ##
@@ -83,7 +83,7 @@ class Simulation:
             coordinates = self.definitions["geometry"]
 
         ## Read grid ##
-        self.grid = Grid(join(self.data_dir, "grid.out"), coordinates)
+        self.grid = Grid(self.data_dir / "grid.out", coordinates)
 
     @property
     def ini(self) -> Pluto_ini:
@@ -91,7 +91,7 @@ class Simulation:
         try:
             return self._ini
         except AttributeError:
-            self._ini = Pluto_ini(join(self.sim_dir, "pluto.ini"))
+            self._ini = Pluto_ini(self.sim_dir / "pluto.ini")
             return self._ini
 
     @property
@@ -100,7 +100,7 @@ class Simulation:
         try:
             return self._definitions
         except AttributeError:
-            self._definitions = Definitions_h(join(self.sim_dir, "definitions.h"))
+            self._definitions = Definitions_h(self.sim_dir / "definitions.h")
             return self._definitions
 
     def __getattr__(self, name):

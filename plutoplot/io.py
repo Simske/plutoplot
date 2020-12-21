@@ -1,27 +1,26 @@
 import numpy as np
 from collections import OrderedDict
 from itertools import zip_longest
-from os.path import join
-
+from pathlib import Path
 
 class SimulationMetadata:
-    def __init__(self, data_dir, format) -> None:
-        self.read_vars(join(data_dir, "{}.out".format(format)), format)
+    def __init__(self, data_dir: Path, format: str) -> None:
+        self.read_vars((Path(data_dir) / format).with_suffix(".out"), format)
 
         # read VTK offsets in file
         if format == "vtk":
             if self.file_mode == "single":
-                self.vtk_offsets = vtk_offsets(join(data_dir, "data.0000.vtk"))
+                self.vtk_offsets = vtk_offsets(data_dir / "data.0000.vtk")
             else:
                 self.vtk_offsets = {}
                 for var in self.vars:
                     self.vtk_offsets.update(
-                        vtk_offsets(join(data_dir, "{}.0000.vtk".format(var)))
+                        vtk_offsets((data_dir / var).with_suffix(".0000.vtk"))
                     )
 
-    def read_vars(self, path, format) -> None:
+    def read_vars(self, path: Path, format) -> None:
         """Read simulation step data and written variables"""
-        with open(path, "r") as f:
+        with path.open() as f:
             lines = f.readlines()
             self.n = len(lines)
             # prepare arrays
@@ -46,12 +45,12 @@ class SimulationMetadata:
             self.binformat = "{}f{}".format(endianness, self.charsize)
 
 
-def vtk_offsets(filename) -> dict:
+def vtk_offsets(path: Path) -> dict:
     """
     Read positions of vars in VTK legacy file
     """
     offsets = {}
-    with open(filename, "rb") as f:
+    with path.open("rb") as f:
         for l in f:
             if not l or l == b"\n":
                 continue
@@ -99,15 +98,15 @@ class Pluto_ini(OrderedDict):
                 out += "{}{}\n".format(rpad([key], colwidth), lpad(value, colwidth[1:]))
             return out
 
-    def __init__(self, path):
+    def __init__(self, path: Path):
         super().__init__()
-        self.path = path
+        self.path = Path(path)
 
         self.parse()
 
     def parse(self, txt=None):
         if txt is None:
-            with open(self.path, "r") as f:
+            with self.path.open() as f:
                 lines = [l.strip() for l in f.readlines()]
         else:
             lines = [l.strip() for l in txt.split("\n")]
@@ -204,11 +203,11 @@ class Definitions_h(OrderedDict):
 
     def __init__(self, path: str):
         super().__init__()
-        self.path = path
+        self.path = Path(path)
         self.parse()
 
     def parse(self, txt: str = None) -> None:
-        with open(self.path, "r") as f:
+        with self.path.open() as f:
             lines = [l.strip() for l in f.readlines()]
 
         for line in lines:

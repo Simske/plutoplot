@@ -98,7 +98,7 @@ class PlutoData(object):
         self.data[var] = self._post_load_process(
             var,
             np.memmap(
-                os.path.join(self.wdir, filename),
+                self.wdir / filename,
                 dtype=self.binformat,
                 mode="c",
                 offset=offset,
