@@ -13,35 +13,49 @@ class Grid:
     """
 
     def __init__(self, gridfile: Path, coordinates: str = None):
-        self.coordinates = coordinates
+        # initialize attributes
+        self.coordinates = None
         self.mapping_grid = {}
         self.mapping_vars = {}
         self.mapping_tex = {}
 
-        if self.coordinates is not None:
+        # read gridfile, get coordinate system if necessary
+        self.read_gridfile(gridfile, coordinates)
+
+        if coordinates is not None:
             self.set_coordinate_system(coordinates)
 
-        self.read_gridfile(gridfile)
-
     def set_coordinate_system(self, coordinates):
+        self.coordinates = coordinates
         self.mapping_grid = mapping_grid(coordinates)
         self.mapping_vars = mapping_vars(coordinates)
         self.mapping_tex = mapping_tex(coordinates)
 
-    def read_gridfile(self, gridfile_path) -> None:
+    def read_gridfile(self, gridfile_path: Path, coordinates: str = None) -> None:
         # to be filled with left and right cell interfaces
         x = []
         dims = []
         with gridfile_path.open() as gf:
+            # Gridfile header
+            header = False  # marker if gf pointer is in header
+            while True:
+                line = gf.readline()
+                if line.startswith("# *****"):
+                    # header starts and ends with # *****...
+                    # toggle marker when entering header
+                    # and exit when header is finished
+                    header = not header
+                    if not header:
+                        break
+                elif coordinates is None and line.startswith("# GEOMETRY"):
+                    self.set_coordinate_system(line[11:].strip().lower())
+
             # read all dimensions
             while True:
                 # read line by line, stop if EOF
                 line = gf.readline()
                 if not line:
                     break
-                # ignore comments
-                if line[0] == "#":
-                    continue
                 # find line with resolution in dimension
                 splitted = line.split()
                 if len(splitted) == 1:
@@ -112,7 +126,9 @@ class Grid:
             raise AttributeError("{} has no attribute '{}'".format(type(self), name))
 
     def __str__(self):
-        return "PLUTO Grid, Dimensions {}".format(self.dims)
+        return "PLUTO Grid, Dimensions {}, Coordinate System: '{}'".format(
+            self.dims, self.coordinates
+        )
 
     __repr__ = __str__
 

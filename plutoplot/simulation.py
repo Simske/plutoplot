@@ -78,11 +78,8 @@ class Simulation:
         self.metadata = SimulationMetadata(self.data_dir, self.format)
         self.vars = self.metadata.vars
 
-        ## Read grid coordinate system ##
-        if coordinates is None:
-            coordinates = self.definitions["geometry"]
-
         ## Read grid ##
+        # coordinate system will be read from gridfile if `coordinates is None`
         self.grid = Grid(self.data_dir / "grid.out", coordinates)
 
     @property
