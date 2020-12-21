@@ -1,15 +1,15 @@
-import os
 import multiprocessing
+import os
 import warnings
-from typing import Generator, Tuple
-import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
+from typing import Generator, Tuple
 
-# local imports
-from .plutodata import PlutoData
+import matplotlib.pyplot as plt
+import numpy as np
+
 from .grid import Grid
-from .io import Pluto_ini, Definitions_h, SimulationMetadata
+from .io import Definitions_h, Pluto_ini, SimulationMetadata
+from .plutodata import PlutoData
 
 # warnings.simplefilter("always")
 
@@ -306,8 +306,10 @@ Variables: {self.vars}""".format(
         )
 
     def __repr__(self) -> str:
-        return "Simulation('{sim_dir}', format='{format}', coordinates='{coord}')".format(
-            sim_dir=self.sim_dir, format=self.format, coord=self.grid.coordinates
+        return (
+            "Simulation('{sim_dir}', format='{format}', coordinates='{coord}')".format(
+                sim_dir=self.sim_dir, format=self.format, coord=self.grid.coordinates
+            )
         )
 
     def __dir__(self) -> list:

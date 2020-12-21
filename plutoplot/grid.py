@@ -1,8 +1,8 @@
-import numpy as np
 from pathlib import Path
 
-from .coordinates import (mapping_grid, mapping_vars, mapping_tex,
-                          transform_mesh)
+import numpy as np
+
+from .coordinates import mapping_grid, mapping_tex, mapping_vars, transform_mesh
 
 
 class Grid:

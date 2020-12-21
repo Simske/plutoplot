@@ -1,7 +1,9 @@
-import numpy as np
 from collections import OrderedDict
 from itertools import zip_longest
 from pathlib import Path
+
+import numpy as np
+
 
 class SimulationMetadata:
     def __init__(self, data_dir: Path, format: str) -> None:

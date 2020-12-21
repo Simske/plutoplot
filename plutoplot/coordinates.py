@@ -7,6 +7,7 @@ mapping_coordinates = {
     "spherical": {"r": "x1", "theta": "x2", "phi": "x3"},
 }
 
+
 def mapping_grid(coordinates: str) -> dict:
     """
     Generate variable name mapping for specified coordinate system.
@@ -29,19 +30,20 @@ def mapping_grid(coordinates: str) -> dict:
     mapping.update(grid_mappings)
     return mapping
 
+
 def mapping_vars(coordinates: str) -> dict:
     if coordinates not in mapping_coordinates:
         raise NotImplementedError(
             "Coordinate system {} not implemented".format(coordinates)
         )
-    return {'v'+key: 'v'+value for key, value in mapping_coordinates[coordinates].items()}
+    return {
+        "v" + key: "v" + value
+        for key, value in mapping_coordinates[coordinates].items()
+    }
 
-tex_mapping = {
-    'theta': r"\theta",
-    'rho': r"\rho",
-    'phi': r"\phi",
-    'prs': "P"
-}
+
+tex_mapping = {"theta": r"\theta", "rho": r"\rho", "phi": r"\phi", "prs": "P"}
+
 
 def mapping_tex(coordinates: str) -> dict:
     """
@@ -54,16 +56,18 @@ def mapping_tex(coordinates: str) -> dict:
             "Tex mappings for {} not implemented".format(coordinates)
         )
     # invert coordinate mapping map, because x1 needs to become named variable
-    mapping = { value: tex_mapping.get(key, key) for key, value in mapping_coordinates[coordinates].items() }
+    mapping = {
+        value: tex_mapping.get(key, key)
+        for key, value in mapping_coordinates[coordinates].items()
+    }
 
     vel = {}
     for key, value in mapping.items():
-        vel['v' + key] = 'v_{}'.format(value)
+        vel["v" + key] = "v_{}".format(value)
     mapping.update(vel)
 
-    for key in ('rho', 'prs'):
+    for key in ("rho", "prs"):
         mapping[key] = tex_mapping.get(key, key)
-
 
     return mapping
 
