@@ -304,8 +304,11 @@ Variables: {self.vars}""".format(
 
     def __repr__(self) -> str:
         return (
-            "Simulation('{sim_dir}', format='{format}', coordinates='{coord}')".format(
-                sim_dir=self.sim_dir, format=self.format, coord=self.grid.coordinates
+            "{selftype}('{sim_dir}', format='{format}', coordinates='{coord}')".format(
+                selftype=type(self).__name__,
+                sim_dir=self.sim_dir,
+                format=self.format,
+                coord=self.grid.coordinates,
             )
         )
 

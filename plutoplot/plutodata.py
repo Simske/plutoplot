@@ -165,8 +165,11 @@ Variables: {vars}""".format(
         )
 
     def __repr__(self) -> None:
-        return "PlutoData({n}, wdir='{wdir}', coordinates='{coords}')".format(
-            n=self.n, wdir=self.wdir, coords=self.grid.coordinates
+        return "{selftype}({n}, wdir='{wdir}', coordinates='{coords}')".format(
+            selftype=type(self).__name__,
+            n=self.n,
+            wdir=self.wdir,
+            coords=self.grid.coordinates,
         )
 
     def __dir__(self) -> list:
