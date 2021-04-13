@@ -292,7 +292,7 @@ class Simulation:
         data_dir: '{data_dir}'
 resolution: {dims}, {coord} coordinates
 data files: {n}, last time: {t}
-Variables: {self.vars}""".format(
+Variables: {vars}""".format(
             sim_dir=self.sim_dir,
             data_dir=self.data_dir,
             dims=self.dims,
