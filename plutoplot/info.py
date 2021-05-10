@@ -7,14 +7,17 @@ from .simulation import Simulation
 
 def main():
     parser = argparse.ArgumentParser(description="Show information on PLUTO simulation")
-    parser.add_argument("path", help="Path to PLUTO simulation", default=".", nargs="?")
+    parser.add_argument(
+        "paths", help="Path to PLUTO simulation", default=["."], nargs="*"
+    )
     parser.add_argument(
         "--version", action="version", version="%(prog)s {}".format(__version__)
     )
 
     args = parser.parse_args()
 
-    print(info(args.path))
+    for path in args.paths:
+        print(info(path))
 
 
 def info(simulationpath):
@@ -26,7 +29,7 @@ def info(simulationpath):
         except FileNotFoundError:
             pass
     if not sims:
-        return "No simulation found at '{}'".format("simulationpath")
+        return "No simulation found at '{}'".format(simulationpath)
 
     sim = sims[0]
     output = "PLUTO simulation at '{}'\n".format(sim.sim_dir)
