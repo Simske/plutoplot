@@ -6,13 +6,22 @@ from .coordinates import mapping_grid, mapping_tex, mapping_vars, transform_mesh
 
 
 class Grid:
-    """
+    """Grid datstructure to be initialized from gridfile
+
+
     dims: dimensions
     shape: shape of arrays
     size: total cells
     """
 
     def __init__(self, gridfile: Path, coordinates: str = None):
+        """Initialize Grid from gridfile
+
+        Args:
+            gridfile (:obj:`str` of :obj:`Path`-like): path to gridfile
+            coordinates (str): name of coordinate system (cartesian, polar,
+                                                          cylindrical, spherical)
+        """
         # initialize attributes
         self.coordinates = None
         self.mapping_grid = {}
