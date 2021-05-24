@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict
 
 import numpy as np
 
@@ -8,25 +9,54 @@ from .coordinates import mapping_grid, mapping_tex, mapping_vars, transform_mesh
 class Grid:
     """Grid datstructure to be initialized from gridfile
 
+    Attributes:
+        gridfile_path (Path): Path to gridfile
+        coordinates (str): Name of coordinate system
+        mapping_grid (:obj:`dict` of :obj:`str`): mapping from coordinate system variable
+            name to PLUTO variable names.
+            (e.g. for spherical coordinates `r`->`x1`, `theta`->`x2`, `phi`->`x3`, )
+        mapping_vars (:obj:`dict` of :obj:`str`): mapping from coordinate system variable
+            attribute name to PLUTO variable names.
+            (e.g. for spherical coordinates `vr`->`vx1`, `vtheta`->`vx2`, `vphi`->`vx3`)
+        mapping_tex (:obj:`dict` of :obj:`str`): mapping from variable name to LaTeX names.
 
-    dims: dimensions
-    shape: shape of arrays
-    size: total cells
+        x1, x2, x3 (numpy.ndarray): cell centered grid (1d, not as mesh)
+        x1l, x2l, x3l (numpy.ndarray): left interfaces of grid (1d, not as mesh)
+        x1r, x2r, x3r (numpy.ndarray): right interface of grid (1d, not as mesh)
+        dx1, dx2, dx3 (numpy.ndarray): cell sizes (1d, not as mesh)
+
+        r, z (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to x1, x2
+        rl, zl (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to x1l, x2l
+        rr, zr (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to x1r, x2r
+        dr, dz (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to dx1, dx2
+
+        r, phi, z (numpy.ndarray): available if `coordinates == 'polar'`, maps to x1, x2, x3
+        rl, phil, zl (numpy.ndarray): available if `coordinates == 'polar'`, maps to x1l, x2l, x3l
+        rr, phir, zr (numpy.ndarray): available if `coordinates == 'polar'`, maps to x1r, x2r, x3r
+        dr, dphi, dz (numpy.ndarray): available if `coordinates == 'polar'`, maps to dx1, dx2, dx3
+
+        r, theta, phi (numpy.ndarray): available if `coordinates == 'spherical'`, maps to x1, x2, x3
+        rl, thetal, phil (numpy.ndarray): available if `coordinates == 'spherical'`, maps to x1l, x2l, x3l
+        rr, thetar, phir (numpy.ndarray): available if `coordinates == 'spherical'`, maps to x1r, x2r, x3r
+        dr, dtheta, dphi (numpy.ndarray): available if `coordinates == 'spherical'`, maps to dx1, dx2, dx3
+
+    Todo:
+        * Generalize and document meshgrid functions
     """
 
     def __init__(self, gridfile: Path, coordinates: str = None):
         """Initialize Grid from gridfile
 
         Args:
-            gridfile (:obj:`str` of :obj:`Path`-like): path to gridfile
-            coordinates (str): name of coordinate system (cartesian, polar,
-                                                          cylindrical, spherical)
+            gridfile (:obj:`str` or :obj:`Pathlike`): path to gridfile
+            coordinates (:obj:`str`, optional): name of coordinate system (cartesian, polar,
+                cylindrical, spherical). If not set this will be read from gridfile.
         """
-        # initialize attributes
-        self.coordinates = None
-        self.mapping_grid = {}
-        self.mapping_vars = {}
-        self.mapping_tex = {}
+        self.gridfile_path: Path = Path(gridfile)
+        self.coordinates: str = None
+        self.mapping_grid: Dict[str, str] = None
+        self.mapping_vars: Dict[str, str] = None
+        self.mapping_tex: Dict[str, str] = None
 
         # read gridfile, get coordinate system if necessary
         self.read_gridfile(gridfile, coordinates)
@@ -34,13 +64,32 @@ class Grid:
         if coordinates is not None:
             self.set_coordinate_system(coordinates)
 
-    def set_coordinate_system(self, coordinates):
+    def set_coordinate_system(self, coordinates: str) -> None:
+        """Set coordinate system of grid and get name mapping
+
+        Args:
+            coordinates (str): name of coordinate system (cartesian, polar,
+                                                          cylindrical, spherical)
+        """
         self.coordinates = coordinates
         self.mapping_grid = mapping_grid(coordinates)
         self.mapping_vars = mapping_vars(coordinates)
         self.mapping_tex = mapping_tex(coordinates)
 
     def read_gridfile(self, gridfile_path: Path, coordinates: str = None) -> None:
+        """Read and parse gridfile
+
+        Args:
+            gridfile_path (:obj:`str` or :obj:`Pathlike`): Path to PLUTO gridfile `grid.out`
+            coordinates (:obj:`str`, optional): coordinate system name
+                                                If not set this will be read from gridfile
+
+        Sets Attributes:
+            x1, x2, x3 (numpy.ndarray): cell centered grid (1d, not as mesh)
+            x1l, x2l, x3l (numpy.ndarray): left interfaces of grid (1d, not as mesh)
+            x1r, x2r, x3r (numpy.ndarray): right interface of grid (1d, not as mesh)
+            dx1, dx2, dx3 (numpy.ndarray): cell sizes (1d, not as mesh)
+        """
         # to be filled with left and right cell interfaces
         x = []
         dims = []
@@ -56,6 +105,7 @@ class Grid:
                     header = not header
                     if not header:
                         break
+                # set coordinate system from gridfile if not explicitly set
                 elif coordinates is None and line.startswith("# GEOMETRY"):
                     self.set_coordinate_system(line[11:].strip().lower())
 
@@ -82,7 +132,7 @@ class Grid:
             setattr(self, "x{}r".format(i), xn[1])
             # cell centers
             setattr(self, "x{}".format(i), (xn[0] + xn[1]) / 2)
-            # cell width
+            # cell widths
             setattr(self, "dx{}".format(i), xn[1] - xn[0])
         self.dims = tuple(dims)
 
@@ -127,19 +177,23 @@ class Grid:
         return transform_mesh(self.coordinates, *self.mesh_edge())
 
     def __getattr__(self, name: str):
-        if name.startswith("_"):
-            raise AttributeError("{} has no attribute '{}'".format(type(self), name))
         try:
             return getattr(self, self.mapping_grid[name])
         except KeyError:
-            raise AttributeError("{} has no attribute '{}'".format(type(self), name))
+            pass
+        raise AttributeError(f"{type(self).__name__} has no attribute '{name}'")
 
-    def __str__(self):
-        return "PLUTO Grid, Dimensions {}, Coordinate System: '{}'".format(
-            self.dims, self.coordinates
+    def __str__(self) -> str:
+        return (
+            f"PLUTO Grid, Dimensions {self.dims}, Coordinate System: {self.coordinates}"
         )
 
-    __repr__ = __str__
+    def __repr__(self) -> str:
+        return f'{type(self).__name__}("{self.gridfile_path}", "{self.coordinates}")'
+
+    def _repr_markdown_(self) -> str:
+        """Pretty printing in IPython / Jupyter"""
+        return str(self)
 
     def __dir__(self):
         return object.__dir__(self) + list(self.mapping_grid.keys())
