@@ -135,10 +135,10 @@ class Simulation:
         """Checks if index is in range and implements negative indexing"""
         if not isinstance(key, (int, np.integer)):
             raise IndexError("Data index has to be int")
-        elif key >= self.n:
+        elif key >= len(self):
             raise IndexError("Data index out of range")
         elif key < 0:
-            key = self._index(self.n + key)
+            key = self._index(len(self) + key)
             if key < 0:
                 raise IndexError("Data index out of range")
         return key
@@ -277,7 +277,7 @@ class Simulation:
             )
 
     def __len__(self) -> int:
-        return self.n
+        return self.metadata.length
 
     def __delitem__(self, key: int) -> None:
         """Delete data object to free memory"""
@@ -297,7 +297,7 @@ Variables: {vars}""".format(
             data_dir=self.data_dir,
             dims=self.dims,
             coord=self.grid.coordinates,
-            n=self.n,
+            n=len(self),
             t=self.t[-1],
             vars=self.vars,
         )
