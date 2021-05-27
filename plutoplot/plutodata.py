@@ -192,6 +192,7 @@ class PlutoData:
         )
 
     def _repr_markdown_(self) -> str:
+        """Jupyter pretty print"""
         return (
             f"**PlutoData**, output nr: {self.n}, time: {self.t}, simulation step: {self.nstep}  \n"
             f"data directory: `{self.metadata.data_path}`  \n"

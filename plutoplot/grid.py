@@ -203,14 +203,15 @@ class Grid:
     def __repr__(self) -> str:
         return f'{type(self).__name__}("{self.gridfile_path}", "{self.coordinates}")'
 
-    def _repr_markdown_(self):
+    def _repr_markdown_(self) -> str:
+        """Jupyter pretty print"""
         return (
             f"**PLUTO Grid** Dimensions {self.dims}, {self.coordinates} coordinate system\n\n"
             "|   |   |   | L |\n"
             "|---|---|---|---|\n"
-            f"|{self.mapping_tex['x1']}|{self.x1l[0]:.2f}|{self.x1r[-1]:.2f}|{self.Lx1:.2f}|\n"
-            f"|{self.mapping_tex['x2']}|{self.x2l[0]:.2f}|{self.x2r[-1]:.2f}|{self.Lx2:.2f}|\n"
-            f"|{self.mapping_tex['x3']}|{self.x3l[0]:.2f}|{self.x3r[-1]:.2f}|{self.Lx3:.2f}|\n"
+            f"|${self.mapping_tex['x1']}$|{self.x1l[0]:.2f}|{self.x1r[-1]:.2f}|{self.Lx1:.2f}|\n"
+            f"|${self.mapping_tex['x2']}$|{self.x2l[0]:.2f}|{self.x2r[-1]:.2f}|{self.Lx2:.2f}|\n"
+            f"|${self.mapping_tex['x3']}$|{self.x3l[0]:.2f}|{self.x3r[-1]:.2f}|{self.Lx3:.2f}|\n"
         )
 
     def __dir__(self):

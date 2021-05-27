@@ -292,6 +292,16 @@ class Simulation:
             f"coordinates='{self.grid.coordinates}')"
         )
 
+    def _repr_markdown_(self) -> str:
+        """Jupyter pretty print"""
+        return (
+            f"**PLUTO simulation** path: `{self.path}`, "
+            f"data directory `$sim_path/{self.data_path.relative_to(self.path)}`  \n"
+            f"Data vars: `{'` `'.join(self.metadata.vars)}`  \n"
+            f"Data files: Format `{self.format}`: {len(self)} files,"
+            f"last time {self.t[-1]}, data timestep {self.dt.mean():.2e}  \n"
+        ) + self.grid._repr_markdown_()
+
     def __dir__(self) -> list:
         return (
             object.__dir__(self)
