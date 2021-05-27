@@ -187,48 +187,63 @@ class Simulation:
         """
         return SimulationIterator(self, *range_, keep=keep)
 
-    def reduce(self, func, dtype=None):
-        """
-        Reduce all simulation steps with function.
-        shape and dtype are taken from return of func.
-        Parameters:
-         - func: function which takes a PlutoData object and returns scalar or numpy array.
-         - dtype: forced data type for result array (if None func() implies dtype)
+    def reduce(
+        self,
+        func,
+        range=(),
+        dtype=None,
+    ):
+        """Reduce all simulation steps with function.
+
+        Shape and dtype are implied from return value of `func()`.
+
+        Args:
+            func (function): function which takes a PlutoData object and returns scalar or numpy array.
+            dtype (numpy.dtype): forced data type for result array (if None func() implies dtype)
+            range (tuple): range tuple for iterator.
+
         Returns:
-         - numpy.ndarray with datatype and shape implied from func
+            numpy.ndarray: reduced data array
         """
+        # run on first element to get shape and dtype
         first = np.array(func(self[0]))
         if dtype is None:
             dtype = first.dtype
+        #
         if first.shape == () or first.shape == (1,):
-            return np.fromiter((func(d) for d in self), dtype=dtype, count=len(self))
+            return np.fromiter(
+                (func(d) for d in self.iter(*range)),
+                dtype=dtype,
+                count=len(self.iter(*range)),
+            )
         else:
-            shape = (len(self), *first.shape)
+            shape = (len(self.iter(*range)), *first.shape)
             res = np.empty(shape, dtype=dtype)
-            for i, d in enumerate(self):
+            for i, d in enumerate(self.iter(*range)):
                 res[i] = func(d)
             return res
 
-    def reduce_parallel(self, func, processes=None, dtype=None):
-        """
-        Reduce all simulation steps with function in parallel.
-        shape and dtype are taken from return of func.
-        Parameters:
-         - func: function which takes a PlutoData object and returns scalar or numpy array.
-                 cannot be lambda function! (function needs to be pickled)
-         - processes: number of processes for parallel computation
-         - dtype: forced data type for result array (if None func() implies dtype)
+    def reduce_parallel(self, func, range=(), processes=None, dtype=None):
+        """Reduce all simulation steps with function in parallel
+
+        Shape and dtype are implied from return value of `func()`.
+
+        Args:
+            func (function): function which takes a PlutoData object and returns scalar or numpy array.
+            dtype (numpy.dtype): forced data type for result array (if None func() implies dtype)
+            range (tuple): range tuple for iterator.
+
         Returns:
-         - numpy.ndarray with datatype and shape implied from func
+            numpy.ndarray: reduced data array
         """
         first = np.array(func(self[0]))
         if dtype is None:
             dtype = first.dtype
 
-        shape = (len(self), *first.shape)
+        shape = (len(self.iter(*range)), *first.shape)
         res = np.empty(shape, dtype=dtype)
         with multiprocessing.Pool(processes) as p:
-            for i, d in enumerate(p.imap(func, self.iter())):
+            for i, d in enumerate(p.imap(func, self.iter(*range))):
                 res[i] = d
         return res
 
