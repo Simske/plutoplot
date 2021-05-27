@@ -2,7 +2,7 @@
 import numpy as np
 
 from .grid import Grid
-from .io import SimulationMetadata
+from .metadata import SimulationMetadata
 from .plotting import plot
 
 

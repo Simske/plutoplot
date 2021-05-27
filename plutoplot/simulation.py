@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .grid import Grid
-from .io import Definitions_h, Pluto_ini, SimulationMetadata
+from .metadata import Definitions_h, Pluto_ini, SimulationMetadata
 from .misc import cached_property
 from .plutodata import PlutoData
 
