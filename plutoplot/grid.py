@@ -3,11 +3,13 @@ from typing import Dict
 
 import numpy as np
 
+from plutoplot.misc import cached_property
+
 from .coordinates import mapping_grid, mapping_tex, mapping_vars, transform_mesh
 
 
 class Grid:
-    """Grid datstructure to be initialized from gridfile
+    """Grid datastructure to be initialized from gridfile
 
     Attributes:
         gridfile_path (Path): Path to gridfile
@@ -19,6 +21,9 @@ class Grid:
             attribute name to PLUTO variable names.
             (e.g. for spherical coordinates `vr`->`vx1`, `vtheta`->`vx2`, `vphi`->`vx3`)
         mapping_tex (:obj:`dict` of :obj:`str`): mapping from variable name to LaTeX names.
+
+        dims (:obj:`tuple` of :obj:`int`): domain dimensions
+        size (int): total size of data arrays (product of dims)
 
         x1, x2, x3 (numpy.ndarray): cell centered grid (1d, not as mesh)
         x1l, x2l, x3l (numpy.ndarray): left interfaces of grid (1d, not as mesh)
@@ -89,6 +94,11 @@ class Grid:
             x1l, x2l, x3l (numpy.ndarray): left interfaces of grid (1d, not as mesh)
             x1r, x2r, x3r (numpy.ndarray): right interface of grid (1d, not as mesh)
             dx1, dx2, dx3 (numpy.ndarray): cell sizes (1d, not as mesh)
+            Lx1, Lx2, Lx3 (numpy.ndarray): Domain width
+            dims (:obj:`tuple` of :obj:`int`): domain dimensions
+            data_shape (:obj:`tuple` of :obj:`int`): shape of data array.
+                                                     Depends on index order
+            size (int): total size of data arrays (product of dims)
         """
         # to be filled with left and right cell interfaces
         x = []
@@ -128,12 +138,14 @@ class Grid:
         # save in grid datastructure
         for i, xn in enumerate(x, start=1):
             # cell interfaces
-            setattr(self, "x{}l".format(i), xn[0])
-            setattr(self, "x{}r".format(i), xn[1])
+            setattr(self, f"x{i}l", xn[0])
+            setattr(self, f"x{i}r", xn[1])
             # cell centers
-            setattr(self, "x{}".format(i), (xn[0] + xn[1]) / 2)
+            setattr(self, f"x{i}", (xn[0] + xn[1]) / 2)
             # cell widths
-            setattr(self, "dx{}".format(i), xn[1] - xn[0])
+            setattr(self, f"dx{i}", xn[1] - xn[0])
+            # domain width
+            setattr(self, f"Lx{i}", xn[1][-1] - xn[0][0])
         self.dims = tuple(dims)
 
         self.data_shape = tuple(
@@ -191,9 +203,15 @@ class Grid:
     def __repr__(self) -> str:
         return f'{type(self).__name__}("{self.gridfile_path}", "{self.coordinates}")'
 
-    def _repr_markdown_(self) -> str:
-        """Pretty printing in IPython / Jupyter"""
-        return str(self)
+    def _repr_markdown_(self):
+        return (
+            f"**PLUTO Grid** Dimensions {self.dims}, {self.coordinates} coordinate system\n\n"
+            "|   |   |   | L |\n"
+            "|---|---|---|---|\n"
+            f"|{self.mapping_tex['x1']}|{self.x1l[0]:.2f}|{self.x1r[-1]:.2f}|{self.Lx1:.2f}|\n"
+            f"|{self.mapping_tex['x2']}|{self.x2l[0]:.2f}|{self.x2r[-1]:.2f}|{self.Lx2:.2f}|\n"
+            f"|{self.mapping_tex['x3']}|{self.x3l[0]:.2f}|{self.x3r[-1]:.2f}|{self.Lx3:.2f}|\n"
+        )
 
     def __dir__(self):
         return object.__dir__(self) + list(self.mapping_grid.keys())

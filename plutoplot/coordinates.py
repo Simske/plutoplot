@@ -30,10 +30,11 @@ def mapping_grid(coordinates: str) -> Dict[str, str]:
 
     mapping = base_coordinate_mappings[coordinates].copy()
     grid_mappings = {}
-    for key, value in mapping.items():
-        grid_mappings[key + "l"] = value + "l"
-        grid_mappings[key + "r"] = value + "r"
-        grid_mappings["d" + key] = "d" + value
+    for coord_name, coord_num in mapping.items():
+        grid_mappings[f"{coord_name}l"] = f"{coord_num}l"
+        grid_mappings[f"{coord_name}r"] = f"{coord_num}r"
+        grid_mappings[f"d{coord_name}"] = f"d{coord_num}"
+        grid_mappings[f"L{coord_name}"] = f"Lx{coord_num}"
     mapping.update(grid_mappings)
     return mapping
 

@@ -22,7 +22,14 @@ class SimulationMetadata:
         path (Path): path to outputfile
         file_mode (str): PLUTO output in `"single"` or `"multiple"` files.
         vtk_offsets (:obj:`dict` of :obj:`int`): Byte offsets of data in VTK file
-
+        t (:obj:`numpy.ndarray` of `numpy.float64`): simulation time of outputs
+        dt (:obj:`numpy.ndarray` of `numpy.float64`): simulation time difference of outputs
+        sim_dt (:obj:`numpy.ndarray` of `numpy.float64`): simulation timestep at outputs
+        nstep (:obj:`numpy.ndarray` of `numpy.float64`): simulation step at outputs
+        file_mode (str): `"single"` or `"multiple"`, PLUTO output mode for format
+        vars (:obj:`list` of :obj:`str`): Variables available in output
+        charsize (int): size of floating point number in bytes (4 or 8)
+        binformat (str): binary format descriptor
     """
 
     def __init__(self, path: Path, format: str):
@@ -33,18 +40,13 @@ class SimulationMetadata:
                 path, then the file at `{path}/{format}.out` will be read.
             format (Path): output format, e.g. `dbl`, `flt`, `vtk`
             length (int): number of outputs
-            t (:obj:`numpy.ndarray` of `numpy.float64`): simulation time of outputs
-            dt (:obj:`numpy.ndarray` of `numpy.float64`): simulation timestep at outputs
-            nstep (:obj:`numpy.ndarray` of `numpy.float64`): simulation step at outputs
-            file_mode (str): `"single"` or `"multiple"`, PLUTO output mode for format
-            vars (:obj:`list` of :obj:`str`): Variables available in output
-            charsize (int): size of floating point number in bytes (4 or 8)
-            binformat (str): binary format descriptor
+
         """
         self.path = Path(path)
         self.format = format
         if self.path.is_dir():
             self.path = self.path / f"{format}.out"
+        self.data_path = self.path.parent
 
         self.read_vars(self.path, format)
 
@@ -73,7 +75,7 @@ class SimulationMetadata:
             self.length = len(lines)
             # prepare arrays
             self.t = np.empty(self.length, float)
-            self.dt = np.empty(self.length, float)
+            self.sim_dt = np.empty(self.length, float)
             self.nstep = np.empty(self.length, int)
 
             # this information should be the same for all outputs
@@ -88,7 +90,8 @@ class SimulationMetadata:
 
             # metadata for single timesteps
             for i, line in enumerate(lines):
-                self.t[i], self.dt[i], self.nstep[i] = line.split()[1:4]
+                self.t[i], self.sim_dt[i], self.nstep[i] = line.split()[1:4]
+            self.dt = self.t[1:] - self.t[:-1]
 
     def __repr__(self):
         return f"{type(self).__name__}('{self.path}','{self.format}')"
