@@ -1,7 +1,6 @@
 import multiprocessing
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from .grid import Grid
@@ -22,7 +21,8 @@ class Simulation:
             (directory with `pluto.ini`, `definitions.h`, etc)
         data_path (pathlib.Path): path to data directory (with `*.out` and data files)
         format (str): simulation format
-        metadata (plutoplot.io.SimulationMetadata):
+        metadata (plutoplot.io.SimulationMetadata): Simulation metadata
+        grid (plutoplot.grid.Grid): Simulation grid
     """
 
     supported_formats = ("dbl", "flt", "vtk")
@@ -85,7 +85,7 @@ class Simulation:
         return Pluto_ini(self.path / "pluto.ini")
 
     @cached_property
-    def definitions(self):
+    def definitions(self) -> Definitions_h:
         """Read access to PLUTO compile time 'definitions.h' file"""
         return Definitions_h(self.path / "definitions.h")
 
@@ -123,8 +123,8 @@ class Simulation:
         return key
 
     def __getitem__(self, key: int) -> DataObject:
-        """
-        Access individual data frames, return them as PlutoData
+        """Access individual data frames, return them as PlutoData
+
         If file is already loaded, object is returned, otherwise data is loaded and returned
         """
         return self.get(key)
@@ -152,7 +152,7 @@ class Simulation:
                 self._data[key] = data
             return data
 
-    def __delitem__(self, key: int) -> None:
+    def __delitem__(self, key: int):
         """Delete data object to free memory"""
         key = self._index(key)
         try:
@@ -373,6 +373,9 @@ class SimulationIterator:
 
     def __next__(self):
         return self.simulation.get(next(self._iterator), keep=self.keep)
+
+    def __iter__(self):
+        return self
 
     def __repr__(self) -> str:
         return (
