@@ -1,6 +1,11 @@
 """PlutoData: Class to contain a single PLUTO output step"""
 import numpy as np
 
+try:
+    import h5py
+except ImportError:
+    pass
+
 from .grid import Grid
 from .metadata import SimulationMetadata
 from .plotting import plot
@@ -119,6 +124,25 @@ class PlutoData:
         Returns:
             numpy.memmap: Memorymap to data
         """
+        if self.metadata.format in ("dbl.h5", "flt.h5"):
+            try:
+                self.h5file
+            except AttributeError:
+                try:
+                    self.h5file = h5py.File(
+                        self.metadata.data_path
+                        / f"data.{self.n:04d}.{self.metadata.format}",
+                        "r",
+                    )
+                except NameError:
+                    raise ImportError(
+                        "plutoplot: Optional dependency 'h5py' not installed, required for reading HDF5 files"
+                    ) from None
+            finally:
+                return self._post_load_process(
+                    varname, self.h5file[f"Timestep_{self.n}/vars/{varname}"]
+                )
+
         if self.metadata.format in ("dbl", "flt"):
             if self.metadata.file_mode == "single":
                 filename = f"data.{self.n:04d}.{self.metadata.format}"

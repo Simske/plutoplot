@@ -25,7 +25,7 @@ class Simulation:
         grid (plutoplot.grid.Grid): Simulation grid
     """
 
-    supported_formats = ("dbl", "flt", "vtk")
+    supported_formats = ("dbl", "flt", "vtk", "dbl.h5", "flt.h5")
     DataObject = PlutoData
 
     def __init__(self, path: Path = ".", format: str = None, coordinates: str = None):
