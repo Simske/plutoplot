@@ -26,23 +26,19 @@ class Grid:
         size (int): total size of data arrays (product of dims)
 
         x1, x2, x3 (numpy.ndarray): cell centered grid (1d, not as mesh)
-        x1l, x2l, x3l (numpy.ndarray): left interfaces of grid (1d, not as mesh)
-        x1r, x2r, x3r (numpy.ndarray): right interface of grid (1d, not as mesh)
+        x1i, x2i, x3i (numpy.ndarray): cell interface coordinates (1d, not as mesh)
         dx1, dx2, dx3 (numpy.ndarray): cell sizes (1d, not as mesh)
 
         r, z (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to x1, x2
-        rl, zl (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to x1l, x2l
-        rr, zr (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to x1r, x2r
+        ri, zi (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to x1i, x2i
         dr, dz (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to dx1, dx2
 
         r, phi, z (numpy.ndarray): available if `coordinates == 'polar'`, maps to x1, x2, x3
-        rl, phil, zl (numpy.ndarray): available if `coordinates == 'polar'`, maps to x1l, x2l, x3l
-        rr, phir, zr (numpy.ndarray): available if `coordinates == 'polar'`, maps to x1r, x2r, x3r
+        ri, phii, zi (numpy.ndarray): available if `coordinates == 'polar'`, maps to x1i, x2i, x3i
         dr, dphi, dz (numpy.ndarray): available if `coordinates == 'polar'`, maps to dx1, dx2, dx3
 
         r, theta, phi (numpy.ndarray): available if `coordinates == 'spherical'`, maps to x1, x2, x3
-        rl, thetal, phil (numpy.ndarray): available if `coordinates == 'spherical'`, maps to x1l, x2l, x3l
-        rr, thetar, phir (numpy.ndarray): available if `coordinates == 'spherical'`, maps to x1r, x2r, x3r
+        ri, thetai, phii (numpy.ndarray): available if `coordinates == 'spherical'`, maps to x1i, x2i, x3i
         dr, dtheta, dphi (numpy.ndarray): available if `coordinates == 'spherical'`, maps to dx1, dx2, dx3
 
     Todo:
@@ -91,8 +87,7 @@ class Grid:
 
         Sets Attributes:
             x1, x2, x3 (numpy.ndarray): cell centered grid (1d, not as mesh)
-            x1l, x2l, x3l (numpy.ndarray): left interfaces of grid (1d, not as mesh)
-            x1r, x2r, x3r (numpy.ndarray): right interface of grid (1d, not as mesh)
+            x1i, x2i, x3i (numpy.ndarray): cell interfaces (1d, not as mesh)
             dx1, dx2, dx3 (numpy.ndarray): cell sizes (1d, not as mesh)
             Lx1, Lx2, Lx3 (numpy.ndarray): Domain width
             dims (:obj:`tuple` of :obj:`int`): domain dimensions
@@ -137,9 +132,8 @@ class Grid:
 
         # save in grid datastructure
         for i, xn in enumerate(x, start=1):
-            # cell interfaces
-            setattr(self, f"x{i}l", xn[0])
-            setattr(self, f"x{i}r", xn[1])
+            # cell edges
+            setattr(self, f"x{i}i", np.append(xn[0], xn[1][-1]))
             # cell centers
             setattr(self, f"x{i}", (xn[0] + xn[1]) / 2)
             # cell widths
@@ -168,9 +162,7 @@ class Grid:
         Returns:
         X, Y with shape for each: (dim[1]+1,dim[0]+1)
         """
-        return np.meshgrid(
-            np.append(self.x1l, self.x1r[-1]), np.append(self.x2l, self.x2r[-1])
-        )
+        return np.meshgrid(self.x1i, self.x2i)
 
     def mesh_center_cartesian(self):
         """
@@ -211,9 +203,9 @@ class Grid:
             f"**PLUTO Grid** Dimensions {self.dims}, {self.coordinates} coordinate system\n\n"
             "|   |   |   | L |\n"
             "|---|---|---|---|\n"
-            f"|${self.mapping_tex['x1']}$|{self.x1l[0]:.2f}|{self.x1r[-1]:.2f}|{self.Lx1:.2f}|\n"
-            f"|${self.mapping_tex['x2']}$|{self.x2l[0]:.2f}|{self.x2r[-1]:.2f}|{self.Lx2:.2f}|\n"
-            f"|${self.mapping_tex['x3']}$|{self.x3l[0]:.2f}|{self.x3r[-1]:.2f}|{self.Lx3:.2f}|\n"
+            f"|${self.mapping_tex['x1']}$|{self.x1i[0]:.2f}|{self.x1i[-1]:.2f}|{self.Lx1:.2f}|\n"
+            f"|${self.mapping_tex['x2']}$|{self.x2i[0]:.2f}|{self.x2i[-1]:.2f}|{self.Lx2:.2f}|\n"
+            f"|${self.mapping_tex['x3']}$|{self.x3i[0]:.2f}|{self.x3i[-1]:.2f}|{self.Lx3:.2f}|\n"
         )
 
     def __dir__(self):

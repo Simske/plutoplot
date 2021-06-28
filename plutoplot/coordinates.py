@@ -7,7 +7,7 @@ import numpy as np
 base_coordinate_mappings: Dict[str, Dict[str, str]] = {
     "cartesian": {"x": "x1", "y": "x2", "z": "x3"},
     "polar": {"r": "x1", "phi": "x2", "z": "x3"},
-    "cylindrical": {"r": "x1", "z": "x2"},
+    "cylindrical": {"r": "x1", "z": "x2", "x3": "x3"},
     "spherical": {"r": "x1", "theta": "x2", "phi": "x3"},
 }
 
@@ -31,8 +31,7 @@ def mapping_grid(coordinates: str) -> Dict[str, str]:
     mapping = base_coordinate_mappings[coordinates].copy()
     grid_mappings = {}
     for coord_name, coord_num in mapping.items():
-        grid_mappings[f"{coord_name}l"] = f"{coord_num}l"
-        grid_mappings[f"{coord_name}r"] = f"{coord_num}r"
+        grid_mappings[f"{coord_name}i"] = f"{coord_num}i"
         grid_mappings[f"d{coord_name}"] = f"d{coord_num}"
         grid_mappings[f"L{coord_name}"] = f"Lx{coord_num}"
     mapping.update(grid_mappings)
