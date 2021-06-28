@@ -253,7 +253,7 @@ class Simulation:
         """
         return self[n].plot(*args, **kwargs)
 
-    def iplot(self, *args, n: int = -1, **kwargs) -> None:
+    def iplot(self, *args, plot_func=None, n: int = -1, **kwargs) -> None:
         """
         Plot simulation interactively. All other arguments forwarded to PlutoData.plot()
         No return, because it would interfere with interactive output in Jupyter Notebook
@@ -264,8 +264,15 @@ class Simulation:
             get_ipython
             import ipywidgets as widgets
 
-            def handler(i):
-                self[i].plot(*args, **kwargs)
+            if plot_func is None:
+
+                def handler(i):
+                    self[i].plot(*args, **kwargs)
+
+            else:
+
+                def handler(i):
+                    plot_func(self[i])
 
             plot = widgets.interactive(
                 handler,
