@@ -201,11 +201,11 @@ class Grid:
         """Jupyter pretty print"""
         return (
             f"**PLUTO Grid** Dimensions {self.dims}, {self.coordinates} coordinate system\n\n"
-            "|   |   |   | L |\n"
-            "|---|---|---|---|\n"
-            f"|${self.mapping_tex['x1']}$|{self.x1i[0]:.2f}|{self.x1i[-1]:.2f}|{self.Lx1:.2f}|\n"
-            f"|${self.mapping_tex['x2']}$|{self.x2i[0]:.2f}|{self.x2i[-1]:.2f}|{self.Lx2:.2f}|\n"
-            f"|${self.mapping_tex['x3']}$|{self.x3i[0]:.2f}|{self.x3i[-1]:.2f}|{self.Lx3:.2f}|\n"
+            "|   |   |   | L | N |\n"
+            "|---|---|---|---|---|\n"
+            f"|${self.mapping_tex['x1']}$|{self.x1i[0]:.2f}|{self.x1i[-1]:.2f}|{self.Lx1:.2f}|{self.dims[0]}|\n"
+            f"|${self.mapping_tex['x2']}$|{self.x2i[0]:.2f}|{self.x2i[-1]:.2f}|{self.Lx2:.2f}|{self.dims[1]}|\n"
+            f"|${self.mapping_tex['x3']}$|{self.x3i[0]:.2f}|{self.x3i[-1]:.2f}|{self.Lx3:.2f}|{self.dims[2]}|\n"
         )
 
     def __dir__(self):
