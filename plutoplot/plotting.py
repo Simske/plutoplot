@@ -22,8 +22,8 @@ def plot(
 
     if ax is None:
         if figsize is None:
-            x_size = 6.4
-            y_size = x_size * grid.dims[1] / grid.dims[0] / 1.1
+            y_size = 10
+            x_size = y_size * grid.dims[0] / grid.dims[1] * 1.1
             figsize = (x_size, y_size)
         _, ax = plt.subplots(figsize=figsize)
 
