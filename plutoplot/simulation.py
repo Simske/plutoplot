@@ -5,7 +5,7 @@ import numpy as np
 
 from .grid import Grid
 from .metadata import Definitions_h, Pluto_ini, SimulationMetadata
-from .misc import cached_property
+from .misc import Slicer, cached_property
 from .plutodata import PlutoData
 
 
@@ -28,56 +28,78 @@ class Simulation:
     supported_formats = ("dbl", "flt", "vtk", "dbl.h5", "flt.h5")
     DataObject = PlutoData
 
-    def __init__(self, path: Path = ".", format: str = None, coordinates: str = None):
-        self.path = Path(path)
+    def __init__(
+        self,
+        path: Path = ".",
+        format: str = None,
+        coordinates: str = None,
+        manual_init: dict = None,
+    ):
+        if not manual_init:
+            self.parent = None
+            self.path = Path(path)
 
-        ## Find data directory ##
-        if (self.path / "grid.out").exists():
-            self.data_path = self.path
-        elif (self.path / "data" / "grid.out").exists():
-            self.data_path = self.path / "data"
-        else:
-            try:
-                from_ini = self.path / self.ini["Static Grid Output"]["output_dir"]
-                if (from_ini / "grid.out").exists():
-                    self.data_path = from_ini
-                else:
-                    raise FileNotFoundError()
-            except FileNotFoundError:
-                raise FileNotFoundError(
-                    "Data directory with gridfile not found"
-                ) from None
+            ## Find data directory ##
+            if (self.path / "grid.out").exists():
+                self.data_path = self.path
+            elif (self.path / "data" / "grid.out").exists():
+                self.data_path = self.path / "data"
+            else:
+                try:
+                    from_ini = self.path / self.ini["Static Grid Output"]["output_dir"]
+                    if (from_ini / "grid.out").exists():
+                        self.data_path = from_ini
+                    else:
+                        raise FileNotFoundError()
+                except FileNotFoundError:
+                    raise FileNotFoundError(
+                        "Data directory with gridfile not found"
+                    ) from None
 
-        # dict for individual data frames
-        self._data = {}
-
-        ## Find data format
-        self.format = None
-        if format is None:
-            for format in self.supported_formats:
+            ## Find data format
+            self.format = None
+            if format is None:
+                for format in self.supported_formats:
+                    if (self.data_path / f"{format}.out").exists():
+                        self.format = format
+                        break
+                if self.format is None:
+                    raise FileNotFoundError(
+                        f"No Metadata file for formats {self.supported_formats} found in {self.data_path}"
+                    )
+            else:
+                if format not in self.supported_formats:
+                    raise NotImplementedError(f"Format '{format}' not supported")
                 if (self.data_path / f"{format}.out").exists():
                     self.format = format
-                    break
-            if self.format is None:
-                raise FileNotFoundError(
-                    f"No Metadata file for formats {self.supported_formats} found in {self.data_path}"
-                )
-        else:
-            if format not in self.supported_formats:
-                raise NotImplementedError(f"Format '{format}' not supported")
-            if (self.data_path / f"{format}.out").exists():
-                self.format = format
-            else:
-                raise FileNotFoundError(
-                    f"Metadata file {self.data_path / f'{format}.out'} not found."
-                )
+                else:
+                    raise FileNotFoundError(
+                        f"Metadata file {self.data_path / f'{format}.out'} not found."
+                    )
 
-        ## Read metadata ##
-        self.metadata = SimulationMetadata(self.data_path, self.format)
+            ## Read metadata ##
+            self.metadata = SimulationMetadata(self.data_path, self.format)
 
-        ## Read grid ##
-        # coordinate system will be read from gridfile if `coordinates is None`
-        self.grid = Grid(self.data_path / "grid.out", coordinates)
+            ## Read grid ##
+            # coordinate system will be read from gridfile if `coordinates is None`
+            self.grid = Grid(self.data_path / "grid.out", coordinates)
+
+        else:  # manual init from parent object
+            self.parent = manual_init["parent"]
+            self.path = self.parent.path
+            self.format = self.parent.format
+            self.data_path = self.parent.data_path
+            self.metadata = self.parent.metadata
+
+            self.grid = self.parent.grid.slicer[manual_init["slice"]]
+
+        # slicer
+        self.slicer = Slicer(
+            lambda slice_: type(self)(manual_init={"parent": self, "slice": slice_})
+        )
+
+        # PlutoData cache
+        self._data = {}
 
     @cached_property
     def ini(self) -> Pluto_ini:

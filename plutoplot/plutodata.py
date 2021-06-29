@@ -6,8 +6,9 @@ try:
 except ImportError:
     pass
 
-from .grid import Grid
+from .grid import Grid, GridSlice
 from .metadata import SimulationMetadata
+from .misc import Slicer
 from .plotting import plot
 
 
@@ -44,6 +45,11 @@ class PlutoData:
         )
 
         self._data = {}
+        self.slicer = Slicer(
+            lambda slice_: PlutoData(
+                self.n, self.metadata, self.grid.slicer[slice_], self.simulation
+            )
+        )
 
     def __getattr__(self, attr: str):
         """Get data / grid / metadata attributes
@@ -170,7 +176,7 @@ class PlutoData:
                 mode="c",
                 offset=offset,
                 shape=self.grid.data_shape,
-            ),
+            )[self.grid.slice],
         )
 
     def _post_load_process(self, varname, data: np.ndarray):

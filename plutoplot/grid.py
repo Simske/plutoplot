@@ -3,7 +3,7 @@ from typing import Dict
 
 import numpy as np
 
-from plutoplot.misc import cached_property
+from plutoplot.misc import Slicer, cached_property
 
 from .coordinates import mapping_grid, mapping_tex, mapping_vars, transform_mesh
 
@@ -64,6 +64,9 @@ class Grid:
 
         if coordinates is not None:
             self.set_coordinate_system(coordinates)
+
+        self.slicer = Slicer(GridSlice, grid=self)
+        self.slice = slice(None)
 
     def set_coordinate_system(self, coordinates: str) -> None:
         """Set coordinate system of grid and get name mapping
@@ -130,22 +133,21 @@ class Grid:
                     # save left and right cell interface
                     x.append((data[:, 1], data[:, 2]))
 
-        # save in grid datastructure
-        for i, xn in enumerate(x, start=1):
-            # cell edges
-            setattr(self, f"x{i}i", np.append(xn[0], xn[1][-1]))
-            # cell centers
-            setattr(self, f"x{i}", (xn[0] + xn[1]) / 2)
-            # cell widths
-            setattr(self, f"dx{i}", xn[1] - xn[0])
-            # domain width
-            setattr(self, f"Lx{i}", xn[1][-1] - xn[0][0])
+        # cell centers
+        self.xn = tuple((xn[0] + xn[1]) / 2 for xn in x)
+        # cell interfaces
+        self.xni = tuple(np.append(xn[0], xn[1][-1]) for xn in x)
+        # cell widths
+        self.dxn = tuple(x[1:] - x[:-1] for x in self.xni)
+        # domain widths
+        self.L = tuple(x[-1] - x[0] for x in self.dxn)
 
-        # tuples to specify coordinate with index
-        self.xn = (self.x1, self.x2, self.x3)
-        self.xni = (self.x1i, self.x2i, self.x3i)
-        self.dxn = (self.dx1, self.dx2, self.dx3)
-        self.L = (self.Lx1, self.Lx2, self.Lx3)
+        # reference in named attributes
+        for i in range(3):
+            setattr(self, f"x{i+1}", self.xn[i])
+            setattr(self, f"x{i+1}i", self.xni[i])
+            setattr(self, f"dx{i+1}", self.dxn[i])
+            setattr(self, f"Lx{i+1}", self.L[i])
 
         self.dims = tuple(dims)
         # indices of dims which are not 1
@@ -233,3 +235,45 @@ class Grid:
 
     def __dir__(self):
         return object.__dir__(self) + list(self.mapping_grid.keys())
+
+
+class GridSlice(Grid):
+    def __init__(self, grid: Grid, slice_):
+        self.slice = slice_
+        self.slicer = None
+
+        self.gridfile_path = None
+        self.set_coordinate_system(grid.coordinates)
+
+        self.xn = tuple(x[self.slice[2 - i]] for i, x in enumerate(grid.xn))
+        self.xni = []
+        for i in range(3):
+            if self.slice[2 - i] is not None:
+                stop = self.slice[2 - i].stop
+                step = self.slice[2 - i].step
+                if stop is not None:
+                    stop += 1 if step is None else step
+                self.xni.append(grid.xni[i][self.slice[2 - i].start : stop : step])
+            else:
+                self.xni.append(grid.xni[i])
+        self.xni = tuple(self.xni)
+        self.dxn = tuple(x[1:] - x[:-1] for x in self.xni)
+        self.L = tuple(x[-1] - x[0] for x in self.dxn)
+
+        # reference in named attributes
+        for i in range(3):
+            setattr(self, f"x{i+1}", self.xn[i])
+            setattr(self, f"x{i+1}i", self.xni[i])
+            setattr(self, f"dx{i+1}", self.dxn[i])
+            setattr(self, f"Lx{i+1}", self.L[i])
+
+        self.dims = tuple(len(x) for x in self.xn)
+        self.rdims = tuple(dim for dim in self.dims if dim > 1)
+        self.rdims_ind = tuple(i for i, dim in enumerate(self.dims) if dim > 1)
+
+        self.data_shape = tuple(reversed(self.dims))
+        self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.data_shape)
+
+        self.size = np.product(self.dims)
+
+        # TODO repr and str

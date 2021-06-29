@@ -16,3 +16,19 @@ def cached_property(func):
         return getattr(self, cached_name)
 
     return property(wrapper)
+
+
+class Slicer:
+    """Helper class to create sliced subclass
+
+    Takes a class to create and arbitrary keyword arguments to pass to the class.
+    It then initializes the object when accessed with `slicer[:]`, and passes the
+    slice as additional kwarg (with name `slice_`) to the class.
+    """
+
+    def __init__(self, SliceClass, **kwargs):
+        self.SliceClass = SliceClass
+        self.kwargs = kwargs
+
+    def __getitem__(self, slice_):
+        return self.SliceClass(slice_=slice_, **self.kwargs)
