@@ -1,23 +1,63 @@
 from pathlib import Path
+from typing import Dict
 
 import numpy as np
+
+from plutoplot.misc import Slicer, cached_property
 
 from .coordinates import mapping_grid, mapping_tex, mapping_vars, transform_mesh
 
 
 class Grid:
-    """
-    dims: dimensions
-    shape: shape of arrays
-    size: total cells
+    """Grid datastructure to be initialized from gridfile
+
+    Attributes:
+        gridfile_path (Path): Path to gridfile
+        coordinates (str): Name of coordinate system
+        mapping_grid (:obj:`dict` of :obj:`str`): mapping from coordinate system variable
+            name to PLUTO variable names.
+            (e.g. for spherical coordinates `r`->`x1`, `theta`->`x2`, `phi`->`x3`, )
+        mapping_vars (:obj:`dict` of :obj:`str`): mapping from coordinate system variable
+            attribute name to PLUTO variable names.
+            (e.g. for spherical coordinates `vr`->`vx1`, `vtheta`->`vx2`, `vphi`->`vx3`)
+        mapping_tex (:obj:`dict` of :obj:`str`): mapping from variable name to LaTeX names.
+
+        dims (:obj:`tuple` of :obj:`int`): domain dimensions
+        size (int): total size of data arrays (product of dims)
+
+        x1, x2, x3 (numpy.ndarray): cell centered grid (1d, not as mesh)
+        x1i, x2i, x3i (numpy.ndarray): cell interface coordinates (1d, not as mesh)
+        dx1, dx2, dx3 (numpy.ndarray): cell sizes (1d, not as mesh)
+
+        r, z (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to x1, x2
+        ri, zi (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to x1i, x2i
+        dr, dz (numpy.ndarray): available if `coordinates == 'cylindrical'`, maps to dx1, dx2
+
+        r, phi, z (numpy.ndarray): available if `coordinates == 'polar'`, maps to x1, x2, x3
+        ri, phii, zi (numpy.ndarray): available if `coordinates == 'polar'`, maps to x1i, x2i, x3i
+        dr, dphi, dz (numpy.ndarray): available if `coordinates == 'polar'`, maps to dx1, dx2, dx3
+
+        r, theta, phi (numpy.ndarray): available if `coordinates == 'spherical'`, maps to x1, x2, x3
+        ri, thetai, phii (numpy.ndarray): available if `coordinates == 'spherical'`, maps to x1i, x2i, x3i
+        dr, dtheta, dphi (numpy.ndarray): available if `coordinates == 'spherical'`, maps to dx1, dx2, dx3
+
+    Todo:
+        * Generalize and document meshgrid functions
     """
 
     def __init__(self, gridfile: Path, coordinates: str = None):
-        # initialize attributes
-        self.coordinates = None
-        self.mapping_grid = {}
-        self.mapping_vars = {}
-        self.mapping_tex = {}
+        """Initialize Grid from gridfile
+
+        Args:
+            gridfile (:obj:`str` or :obj:`Pathlike`): path to gridfile
+            coordinates (:obj:`str`, optional): name of coordinate system (cartesian, polar,
+                cylindrical, spherical). If not set this will be read from gridfile.
+        """
+        self.gridfile_path: Path = Path(gridfile)
+        self.coordinates: str = None
+        self.mapping_grid: Dict[str, str] = None
+        self.mapping_vars: Dict[str, str] = None
+        self.mapping_tex: Dict[str, str] = None
 
         # read gridfile, get coordinate system if necessary
         self.read_gridfile(gridfile, coordinates)
@@ -25,13 +65,39 @@ class Grid:
         if coordinates is not None:
             self.set_coordinate_system(coordinates)
 
-    def set_coordinate_system(self, coordinates):
+        self.slicer = Slicer(GridSlice, grid=self)
+        self.slice = slice(None)
+
+    def set_coordinate_system(self, coordinates: str) -> None:
+        """Set coordinate system of grid and get name mapping
+
+        Args:
+            coordinates (str): name of coordinate system (cartesian, polar,
+                                                          cylindrical, spherical)
+        """
         self.coordinates = coordinates
         self.mapping_grid = mapping_grid(coordinates)
         self.mapping_vars = mapping_vars(coordinates)
         self.mapping_tex = mapping_tex(coordinates)
 
     def read_gridfile(self, gridfile_path: Path, coordinates: str = None) -> None:
+        """Read and parse gridfile
+
+        Args:
+            gridfile_path (:obj:`str` or :obj:`Pathlike`): Path to PLUTO gridfile `grid.out`
+            coordinates (:obj:`str`, optional): coordinate system name
+                                                If not set this will be read from gridfile
+
+        Sets Attributes:
+            x1, x2, x3 (numpy.ndarray): cell centered grid (1d, not as mesh)
+            x1i, x2i, x3i (numpy.ndarray): cell interfaces (1d, not as mesh)
+            dx1, dx2, dx3 (numpy.ndarray): cell sizes (1d, not as mesh)
+            Lx1, Lx2, Lx3 (numpy.ndarray): Domain width
+            dims (:obj:`tuple` of :obj:`int`): domain dimensions
+            data_shape (:obj:`tuple` of :obj:`int`): shape of data array.
+                                                     Depends on index order
+            size (int): total size of data arrays (product of dims)
+        """
         # to be filled with left and right cell interfaces
         x = []
         dims = []
@@ -47,6 +113,7 @@ class Grid:
                     header = not header
                     if not header:
                         break
+                # set coordinate system from gridfile if not explicitly set
                 elif coordinates is None and line.startswith("# GEOMETRY"):
                     self.set_coordinate_system(line[11:].strip().lower())
 
@@ -66,71 +133,147 @@ class Grid:
                     # save left and right cell interface
                     x.append((data[:, 1], data[:, 2]))
 
-        # save in grid datastructure
-        for i, xn in enumerate(x, start=1):
-            # cell interfaces
-            setattr(self, "x{}l".format(i), xn[0])
-            setattr(self, "x{}r".format(i), xn[1])
-            # cell centers
-            setattr(self, "x{}".format(i), (xn[0] + xn[1]) / 2)
-            # cell width
-            setattr(self, "dx{}".format(i), xn[1] - xn[0])
-        self.dims = tuple(dims)
+        # cell centers
+        self.xn = tuple((xn[0] + xn[1]) / 2 for xn in x)
+        # cell interfaces
+        self.xni = tuple(np.append(xn[0], xn[1][-1]) for xn in x)
+        # cell widths
+        self.dxn = tuple(x[1:] - x[:-1] for x in self.xni)
+        # domain widths
+        self.L = tuple(x[-1] - x[0] for x in self.dxn)
 
-        self.data_shape = tuple(
-            (self.dims[i] for i in range(2, -1, -1) if self.dims[i] > 1)
-        )
+        # reference in named attributes
+        for i in range(3):
+            setattr(self, f"x{i+1}", self.xn[i])
+            setattr(self, f"x{i+1}i", self.xni[i])
+            setattr(self, f"dx{i+1}", self.dxn[i])
+            setattr(self, f"Lx{i+1}", self.L[i])
+
+        self.dims = tuple(dims)
+        # indices of dims which are not 1
+        self.rdims = tuple(dim for dim in dims if dim > 1)
+        self.rdims_ind = tuple(i for i, dim in enumerate(dims) if dim > 1)
+
+        self.data_shape = tuple(reversed(dims))
+        self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.data_shape)
 
         self.size = np.product(self.dims)
 
+    @cached_property
     def mesh_center(self):
         """
         2D cell center mesh in native coordinates
         Returns:
         X, Y with shape for each: (dim[1],dim[0])
         """
-        return np.meshgrid(self.x1, self.x2)
+        if len(self.rdims) == 1:
+            return self.xn[self.rdims_ind[0]]
+        elif len(self.rdims) == 2:
+            return np.meshgrid(self.xn[self.rdims_ind[0]], self.xn[self.rdims_ind[1]])
+        else:
+            raise NotImplementedError("3D mesh not implemented yet")
 
+    @cached_property
     def mesh_edge(self):
         """
         2D cell edge mesh in native coordinates
         Returns:
         X, Y with shape for each: (dim[1]+1,dim[0]+1)
         """
-        return np.meshgrid(
-            np.append(self.x1l, self.x1r[-1]), np.append(self.x2l, self.x2r[-1])
-        )
+        if len(self.rdims) == 1:
+            return self.xn[self.rdims_ind[0]]
+        elif len(self.rdims) == 2:
+            return np.meshgrid(self.xni[self.rdims_ind[0]], self.xni[self.rdims_ind[1]])
+        else:
+            raise NotImplementedError("3D mesh not implemented yet")
 
+    @cached_property
     def mesh_center_cartesian(self):
-        """
-        2D cell center mesh trasformed to cartesian coordinates
-        Returns:
-        X, Y with shape for each: (dim[1],dim[0])
-        """
-        return transform_mesh(self.coordinates, *self.mesh_center())
+        """TODO"""
+        if len(self.rdims) != 2:
+            raise NotImplementedError(
+                "Projection to cartesian grid only implemented in 2D"
+            )
+        return transform_mesh(self, *self.mesh_center)
 
+    @cached_property
     def mesh_edge_cartesian(self):
-        """
-        2D cell edge mesh trasformed to cartesian coordinates
-        Returns:
-        X, Y with shape for each: (dim[1]+1,dim[0]+1)
-        """
-        return transform_mesh(self.coordinates, *self.mesh_edge())
+        """TODO"""
+        if len(self.rdims) != 2:
+            raise NotImplementedError(
+                "Projection to cartesian grid only implemented in 2D"
+            )
+        return transform_mesh(self, *self.mesh_edge)
 
     def __getattr__(self, name: str):
         if name.startswith("_"):
-            raise AttributeError("{} has no attribute '{}'".format(type(self), name))
+            raise AttributeError(f"{type(self).__name__} has no attribute '{name}'")
         try:
             return getattr(self, self.mapping_grid[name])
         except KeyError:
-            raise AttributeError("{} has no attribute '{}'".format(type(self), name))
+            pass
+        raise AttributeError(f"{type(self).__name__} has no attribute '{name}'")
 
-    def __str__(self):
-        return "PLUTO Grid, Dimensions {}, Coordinate System: '{}'".format(
-            self.dims, self.coordinates
+    def __str__(self) -> str:
+        return (
+            f"PLUTO Grid, Dimensions {self.dims}, Coordinate System: {self.coordinates}"
         )
 
-    __repr__ = __str__
+    def __repr__(self) -> str:
+        return f'{type(self).__name__}("{self.gridfile_path}", "{self.coordinates}")'
+
+    def _repr_markdown_(self) -> str:
+        """Jupyter pretty print"""
+        return (
+            f"**PLUTO Grid** Dimensions {self.dims}, {self.coordinates} coordinate system\n\n"
+            "|   |   |   | L | N |\n"
+            "|---|---|---|---|---|\n"
+            f"|${self.mapping_tex['x1']}$|{self.x1i[0]:.2f}|{self.x1i[-1]:.2f}|{self.Lx1:.2f}|{self.dims[0]}|\n"
+            f"|${self.mapping_tex['x2']}$|{self.x2i[0]:.2f}|{self.x2i[-1]:.2f}|{self.Lx2:.2f}|{self.dims[1]}|\n"
+            f"|${self.mapping_tex['x3']}$|{self.x3i[0]:.2f}|{self.x3i[-1]:.2f}|{self.Lx3:.2f}|{self.dims[2]}|\n"
+        )
 
     def __dir__(self):
         return object.__dir__(self) + list(self.mapping_grid.keys())
+
+
+class GridSlice(Grid):
+    def __init__(self, grid: Grid, slice_):
+        self.slice = slice_
+        self.slicer = None
+
+        self.gridfile_path = None
+        self.set_coordinate_system(grid.coordinates)
+
+        self.xn = tuple(x[self.slice[2 - i]] for i, x in enumerate(grid.xn))
+        self.xni = []
+        for i in range(3):
+            if self.slice[2 - i] is not None:
+                stop = self.slice[2 - i].stop
+                step = self.slice[2 - i].step
+                if stop is not None:
+                    stop += 1 if step is None else step
+                self.xni.append(grid.xni[i][self.slice[2 - i].start : stop : step])
+            else:
+                self.xni.append(grid.xni[i])
+        self.xni = tuple(self.xni)
+        self.dxn = tuple(x[1:] - x[:-1] for x in self.xni)
+        self.L = tuple(x[-1] - x[0] for x in self.dxn)
+
+        # reference in named attributes
+        for i in range(3):
+            setattr(self, f"x{i+1}", self.xn[i])
+            setattr(self, f"x{i+1}i", self.xni[i])
+            setattr(self, f"dx{i+1}", self.dxn[i])
+            setattr(self, f"Lx{i+1}", self.L[i])
+
+        self.dims = tuple(len(x) for x in self.xn)
+        self.rdims = tuple(dim for dim in self.dims if dim > 1)
+        self.rdims_ind = tuple(i for i, dim in enumerate(self.dims) if dim > 1)
+
+        self.data_shape = tuple(reversed(self.dims))
+        self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.data_shape)
+
+        self.size = np.product(self.dims)
+
+        # TODO repr and str

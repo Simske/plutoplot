@@ -32,30 +32,20 @@ def info(simulationpath):
         return "No simulation found at '{}'".format(simulationpath)
 
     sim = sims[0]
-    output = "PLUTO simulation at '{}'\n".format(sim.sim_dir)
-    output += "Data directory at '$SIM_DIR/{}'\n".format(
-        sim.data_dir.relative_to(sim.sim_dir)
+    output = (
+        f"PLUTO simulation at '{sim.path}'\n"
+        f"Data directory at '$SIM_DIR/{sim.data_path.relative_to(sim.path)}'\n"
+        f"{sim.grid.coordinates.capitalize()} grid with dimensions {sim.dims}\n"
+        f"Domain: x1: {sim.x1l[0]:.2e} .. {sim.x1r[-1]:.2e} (Lx1 = {sim.Lx1:.2e})\n"
+        f"        x2: {sim.x2l[0]:.2e} .. {sim.x2r[-1]:.2e} (Lx2 = {sim.Lx2:.2e})\n"
+        f"        x2: {sim.x3l[0]:.2e} .. {sim.x3r[-1]:.2e} (Lx3 = {sim.Lx3:.2e})\n"
+        f"Available variables: {' '.join(sim.vars)}\n"
+        "Data files:\n"
     )
-    output += "{} grid with dimensions {}\n".format(
-        sim.grid.coordinates.capitalize(), sim.dims
-    )
-    output += "Domain: x1: {:.2e} .. {:.2e} (Lx1 = {:.2e})\n".format(
-        sim.x1l[0], sim.x1r[-1], sim.x1r[-1] - sim.x1l[0]
-    )
-    output += "        x2: {:.2e} .. {:.2e} (Lx2 = {:.2e})\n".format(
-        sim.x2l[0], sim.x2r[-1], sim.x2r[-1] - sim.x2l[0]
-    )
-    output += "        x2: {:.2e} .. {:.2e} (Lx3 = {:.2e})\n".format(
-        sim.x3l[0], sim.x3r[-1], sim.x3r[-1] - sim.x3l[0]
-    )
-    output += "Available variables: {}\n".format(" ".join(sim.vars))
-    output += "Data files:\n"
     for sim in sims:
-        dt = sim.t[1:] - sim.t[:-1]
         output += (
-            "    Format {}: {} files, last time {}, data timestep {:.2e}\n".format(
-                sim.format, len(sim), sim.t[-1], dt.mean(), dt.std()
-            )
+            f"    Format {sim.format}: {len(sim)} files, "
+            f"last time {sim.t[-1]}, data timestep {sim.dt.mean():.2e}\n"
         )
 
     return output
