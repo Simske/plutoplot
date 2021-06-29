@@ -140,11 +140,20 @@ class Grid:
             setattr(self, f"dx{i}", xn[1] - xn[0])
             # domain width
             setattr(self, f"Lx{i}", xn[1][-1] - xn[0][0])
-        self.dims = tuple(dims)
 
-        self.data_shape = tuple(
-            (self.dims[i] for i in range(2, -1, -1) if self.dims[i] > 1)
-        )
+        # tuples to specify coordinate with index
+        self.xn = (self.x1, self.x2, self.x3)
+        self.xni = (self.x1i, self.x2i, self.x3i)
+        self.dxn = (self.dx1, self.dx2, self.dx3)
+        self.L = (self.Lx1, self.Lx2, self.Lx3)
+
+        self.dims = tuple(dims)
+        # indices of dims which are not 1
+        self.rdims = tuple(dim for dim in dims if dim > 1)
+        self.rdims_ind = tuple(i for i, dim in enumerate(dims) if dim > 1)
+
+        self.data_shape = tuple(reversed(dims))
+        self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.data_shape)
 
         self.size = np.product(self.dims)
 
@@ -154,7 +163,12 @@ class Grid:
         Returns:
         X, Y with shape for each: (dim[1],dim[0])
         """
-        return np.meshgrid(self.x1, self.x2)
+        if len(self.rdims) == 1:
+            return self.xn[self.rdims_ind[0]]
+        elif len(self.rdims) == 2:
+            return np.meshgrid(self.xn[self.rdims_ind[0]], self.xn[self.rdims_ind[1]])
+        else:
+            raise NotImplementedError("3D mesh not implemented yet")
 
     def mesh_edge(self):
         """
@@ -162,7 +176,12 @@ class Grid:
         Returns:
         X, Y with shape for each: (dim[1]+1,dim[0]+1)
         """
-        return np.meshgrid(self.x1i, self.x2i)
+        if len(self.rdims) == 1:
+            return self.xn[self.rdims_ind[0]]
+        elif len(self.rdims) == 2:
+            return np.meshgrid(self.xni[self.rdims_ind[0]], self.xni[self.rdims_ind[1]])
+        else:
+            raise NotImplementedError("3D mesh not implemented yet")
 
     def mesh_center_cartesian(self):
         """

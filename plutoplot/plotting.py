@@ -20,29 +20,43 @@ def plot(
 ) -> None:
     """Simple colorplot for 2-dim data"""
 
-    if ax is None:
-        if figsize is None:
-            y_size = 10
-            x_size = y_size * grid.dims[0] / grid.dims[1] * 1.1
-            figsize = (x_size, y_size)
-        _, ax = plt.subplots(figsize=figsize)
+    if len(grid.rdims) == 1:
+        if ax is None:
+            if figsize is None:
+                figsize = (16, 10)
+            _, ax = plt.subplots(figsize=figsize)
 
-    if projection:
-        X, Y = grid.mesh_edge_cartesian()
-        ax.set_xlabel("$x$")
-        ax.set_ylabel("$y$")
-    else:
-        X, Y = grid.mesh_edge()
-        ax.set_xlabel("${}$".format(grid.mapping_tex["x1"]))
-        ax.set_ylabel("${}$".format(grid.mapping_tex["x2"]))
+        ax.set_xlabel(f"${grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}$")
+        ax.set_ylabel(label)
+        ax.grid()
 
-    im = ax.pcolormesh(X, Y, data, vmin=vmin, vmax=vmax, cmap=cmap)
-    ax.set_aspect(1)
-    if cbar:
-        formatter = ScalarFormatter()
-        formatter.set_powerlimits((-2, 2))
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="10%", pad=0.05)
-        plt.colorbar(im, label=label, format=formatter, cax=cax)
+        ax.plot(grid.xn[grid.rdims_ind[0]], data[grid.rmask], label=label)
+
+    elif len(grid.rdims) == 2:
+        if ax is None:
+            if figsize is None:
+                y_size = 10
+                x_size = y_size * grid.rdims[0] / grid.rdims[1] * 1.1
+                figsize = (x_size, y_size)
+            _, ax = plt.subplots(figsize=figsize)
+
+        if projection:
+            raise NotImplementedError("Projected plotting not implemented")
+        else:
+            ax.set_xlabel(f"${grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}$")
+            ax.set_ylabel(f"${grid.mapping_tex[f'x{grid.rdims_ind[1]+1}']}$")
+            X, Y = grid.xni[grid.rdims_ind[0]], grid.xni[grid.rdims_ind[1]]
+
+        im = ax.pcolormesh(X, Y, data[grid.rmask], vmin=vmin, vmax=vmax, cmap=cmap)
+        ax.set_aspect(1)
+        if cbar:
+            formatter = ScalarFormatter()
+            formatter.set_powerlimits((-2, 2))
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="10%", pad=0.05)
+            plt.colorbar(im, label=label, format=formatter, cax=cax)
+
+    elif len(grid.rdims) == 3:
+        raise NotImplementedError("3D plotting not supported (yet)")
 
     return ax.figure, ax
