@@ -33,19 +33,29 @@ def plot(
         ax.plot(grid.xn[grid.rdims_ind[0]], data[grid.rmask], label=label)
 
     elif len(grid.rdims) == 2:
-        if ax is None:
-            if figsize is None:
-                y_size = 10
-                x_size = y_size * grid.rdims[0] / grid.rdims[1] * 1.1
-                figsize = (x_size, y_size)
-            _, ax = plt.subplots(figsize=figsize)
-
         if projection:
-            raise NotImplementedError("Projected plotting not implemented")
+            (xlabel, ylabel), (X, Y) = grid.mesh_edge_cartesian
+
         else:
             ax.set_xlabel(f"${grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}$")
             ax.set_ylabel(f"${grid.mapping_tex[f'x{grid.rdims_ind[1]+1}']}$")
             X, Y = grid.xni[grid.rdims_ind[0]], grid.xni[grid.rdims_ind[1]]
+
+        if ax is None:
+            if figsize is None:
+                # set a figsize depending on aspect ratio
+                ratio = (X.max() - X.min()) / (Y.max() - Y.min())
+                if ratio < 16 / 9:
+                    y_size = 10
+                    x_size = y_size / ratio * 1.1
+                else:
+                    x_size = 16
+                    y_size = x_size * ratio / 1.1
+                figsize = (x_size, y_size)
+            _, ax = plt.subplots(figsize=figsize)
+
+        ax.set_xlabel(f"${xlabel}$")
+        ax.set_ylabel(f"${ylabel}$")
 
         im = ax.pcolormesh(X, Y, data[grid.rmask], vmin=vmin, vmax=vmax, cmap=cmap)
         ax.set_aspect(1)

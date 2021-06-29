@@ -157,6 +157,7 @@ class Grid:
 
         self.size = np.product(self.dims)
 
+    @cached_property
     def mesh_center(self):
         """
         2D cell center mesh in native coordinates
@@ -170,6 +171,7 @@ class Grid:
         else:
             raise NotImplementedError("3D mesh not implemented yet")
 
+    @cached_property
     def mesh_edge(self):
         """
         2D cell edge mesh in native coordinates
@@ -183,21 +185,23 @@ class Grid:
         else:
             raise NotImplementedError("3D mesh not implemented yet")
 
+    @cached_property
     def mesh_center_cartesian(self):
-        """
-        2D cell center mesh trasformed to cartesian coordinates
-        Returns:
-        X, Y with shape for each: (dim[1],dim[0])
-        """
-        return transform_mesh(self.coordinates, *self.mesh_center())
+        """TODO"""
+        if len(self.rdims) != 2:
+            raise NotImplementedError(
+                "Projection to cartesian grid only implemented in 2D"
+            )
+        return transform_mesh(self, *self.mesh_center)
 
+    @cached_property
     def mesh_edge_cartesian(self):
-        """
-        2D cell edge mesh trasformed to cartesian coordinates
-        Returns:
-        X, Y with shape for each: (dim[1]+1,dim[0]+1)
-        """
-        return transform_mesh(self.coordinates, *self.mesh_edge())
+        """TODO"""
+        if len(self.rdims) != 2:
+            raise NotImplementedError(
+                "Projection to cartesian grid only implemented in 2D"
+            )
+        return transform_mesh(self, *self.mesh_edge)
 
     def __getattr__(self, name: str):
         if name.startswith("_"):

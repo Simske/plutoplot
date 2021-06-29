@@ -122,16 +122,28 @@ def mapping_tex(coordinates: str) -> Dict[str, str]:
     return mapping
 
 
-def transform_mesh(coordinates, x1, x2):
-    if coordinates == "cartesian":
-        return x1, x2
-    elif coordinates == "spherical":
-        x = x1 * np.sin(x2)
-        y = x1 * np.cos(x2)
-        return x, y
-    elif coordinates == "cylindrical":
-        return x1, x2
-    elif coordinates == "polar":
-        x = x1 * np.cos(x2)
-        y = x1 * np.sin(x2)
-        return x, y
+def transform_mesh(grid, mesh1, mesh2):
+    if grid.coordinates == "cartesian":
+        return ("x", "y"), (mesh1, mesh2)
+    elif grid.coordinates == "spherical":
+        if grid.rdims_ind == (0, 1):
+            r = mesh1
+            z = r * np.cos(mesh2)
+            return ("r", "z"), (r, z)
+        elif grid.rdims_ind == (0, 2):
+            factor = mesh1 * np.sin(grid.x2[0])
+            x = factor * np.cos(mesh2)
+            y = factor * np.sin(mesh2)
+            return ("x", "y"), (x, y)
+        raise NotImplementedError("Projection in (theta, phi) not supported")
+    elif grid.coordinates == "cylindrical":
+        return ("r", "z"), (mesh1, mesh2)
+    elif grid.coordinates == "polar":
+        if grid.rdims_ind == (0, 1):
+            x = mesh1 * np.cos(mesh2)
+            y = mesh2 * np.sin(mesh2)
+            return ("x", "y"), (x, y)
+        elif grid.rdims_ind == (0, 2):
+            return ("r", "z"), (mesh1, mesh2)
+        else:
+            raise NotImplementedError("Projection in (phi, z) not supported")
