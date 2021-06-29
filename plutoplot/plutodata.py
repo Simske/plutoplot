@@ -184,7 +184,9 @@ class PlutoData:
         """
         return data
 
-    def plot(self, var: str, grid=None, label: str = None, **kwargs):
+    def plot(
+        self, var: str, grid=None, label: str = None, show_title: bool = True, **kwargs
+    ):
         """TODO"""
         if var is None:
             var = self.vars[0]
@@ -199,7 +201,12 @@ class PlutoData:
         if label is None:
             label = "${}$".format(self.grid.mapping_tex.get(varname, varname))
 
-        return plot(var, grid, label=label, **kwargs)
+        fig, ax = plot(var, grid, label=label, **kwargs)
+
+        if show_title:
+            ax.set_title(f"$t={self.t:.2f}$")
+
+        return fig, ax
 
     def __str__(self) -> str:
         return (
