@@ -271,7 +271,7 @@ class GridSlice(Grid):
         self.rdims = tuple(dim for dim in self.dims if dim > 1)
         self.rdims_ind = tuple(i for i, dim in enumerate(self.dims) if dim > 1)
 
-        self.data_shape = tuple(reversed(self.dims))
+        self.data_shape = grid.data_shape
         self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.data_shape)
 
         self.size = np.product(self.dims)
