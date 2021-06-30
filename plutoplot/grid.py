@@ -45,19 +45,29 @@ class Grid:
         * Generalize and document meshgrid functions
     """
 
-    def __init__(self, gridfile: Path, coordinates: str = None):
+    def __init__(self, gridfile: Path, coordinates: str = None, indexing="ijk"):
         """Initialize Grid from gridfile
 
         Args:
             gridfile (:obj:`str` or :obj:`Pathlike`): path to gridfile
             coordinates (:obj:`str`, optional): name of coordinate system (cartesian, polar,
                 cylindrical, spherical). If not set this will be read from gridfile.
+            indexing (:obj:`str`, optional): index order for arrays. 'ijk' or 'kji'
         """
         self.gridfile_path: Path = Path(gridfile)
         self.coordinates: str = None
         self.mapping_grid: Dict[str, str] = None
         self.mapping_vars: Dict[str, str] = None
         self.mapping_tex: Dict[str, str] = None
+
+        # helper function to transpose arrays if necessary
+        if indexing == "ijk":
+            self.T = lambda x: x.T  # transpose
+        elif indexing == "kji":
+            self.T = lambda x: x  # do nothing
+        else:
+            raise RuntimeError(f"Pluto Grid: indexing {indexing} not supported")
+        self.indexing = indexing
 
         # read gridfile, get coordinate system if necessary
         self.read_gridfile(gridfile, coordinates)
@@ -155,7 +165,10 @@ class Grid:
         self.rdims_ind = tuple(i for i, dim in enumerate(dims) if dim > 1)
 
         self.data_shape = tuple(reversed(dims))
-        self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.data_shape)
+        if self.indexing == "ijk":
+            self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.dims)
+        else:
+            self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.data_shape)
 
         self.size = np.product(self.dims)
 
@@ -169,7 +182,8 @@ class Grid:
         if len(self.rdims) == 1:
             return self.xn[self.rdims_ind[0]]
         elif len(self.rdims) == 2:
-            return np.meshgrid(self.xn[self.rdims_ind[0]], self.xn[self.rdims_ind[1]])
+            X, Y = np.meshgrid(self.xn[self.rdims_ind[0]], self.xn[self.rdims_ind[1]])
+            return self.T(X), self.T(Y)
         else:
             raise NotImplementedError("3D mesh not implemented yet")
 
@@ -183,7 +197,8 @@ class Grid:
         if len(self.rdims) == 1:
             return self.xn[self.rdims_ind[0]]
         elif len(self.rdims) == 2:
-            return np.meshgrid(self.xni[self.rdims_ind[0]], self.xni[self.rdims_ind[1]])
+            X, Y = np.meshgrid(self.xni[self.rdims_ind[0]], self.xni[self.rdims_ind[1]])
+            return self.T(X), self.T(Y)
         else:
             raise NotImplementedError("3D mesh not implemented yet")
 
@@ -245,17 +260,19 @@ class GridSlice(Grid):
         self.gridfile_path = None
         self.set_coordinate_system(grid.coordinates)
 
-        self.xn = tuple(x[self.slice[2 - i]] for i, x in enumerate(grid.xn))
+        self.T = grid.T
+        self.indexing = grid.indexing
+
+        sl_ind = (lambda i: i) if self.indexing == "ijk" else (lambda i: 2 - i)
+        self.xn = tuple(x[self.slice[sl_ind(i)]] for i, x in enumerate(grid.xn))
         self.xni = []
         for i in range(3):
-            if self.slice[2 - i] is not None:
-                stop = self.slice[2 - i].stop
-                step = self.slice[2 - i].step
-                if stop is not None:
-                    stop += 1 if step is None else step
-                self.xni.append(grid.xni[i][self.slice[2 - i].start : stop : step])
-            else:
-                self.xni.append(grid.xni[i])
+            stop = self.slice[sl_ind(i)].stop
+            step = self.slice[sl_ind(i)].step
+            if stop is not None:
+                stop += 1 if step is None else step
+            self.xni.append(grid.xni[i][self.slice[sl_ind(i)].start : stop : step])
+
         self.xni = tuple(self.xni)
         self.dxn = tuple(x[1:] - x[:-1] for x in self.xni)
         self.L = tuple(x[-1] - x[0] for x in self.dxn)
@@ -272,8 +289,11 @@ class GridSlice(Grid):
         self.rdims_ind = tuple(i for i, dim in enumerate(self.dims) if dim > 1)
 
         self.data_shape = grid.data_shape
-        self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.data_shape)
+        if self.indexing == "ijk":
+            self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.dims)
+        else:
+            self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.dims)
 
-        self.size = np.product(self.dims)
+        self.size = grid.size
 
         # TODO repr and str

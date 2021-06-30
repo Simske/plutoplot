@@ -170,12 +170,14 @@ class PlutoData:
 
         return self._post_load_process(
             varname,
-            np.memmap(
-                self.metadata.data_path / filename,
-                dtype=self.metadata.binformat,
-                mode="c",
-                offset=offset,
-                shape=self.grid.data_shape,
+            self.grid.T(
+                np.memmap(
+                    self.metadata.data_path / filename,
+                    dtype=self.metadata.binformat,
+                    mode="c",
+                    offset=offset,
+                    shape=self.grid.data_shape,
+                )
             )[self.grid.slice],
         )
 
