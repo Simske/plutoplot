@@ -124,7 +124,10 @@ def mapping_tex(coordinates: str) -> Dict[str, str]:
 
 def transform_mesh(grid, mesh1, mesh2):
     if grid.coordinates == "cartesian":
-        return ("x", "y"), (mesh1, mesh2)
+        return (
+            f"{grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}",
+            f"{grid.mapping_tex[f'x{grid.rdims_ind[1]+1}']}",
+        ), (mesh1, mesh2)
     elif grid.coordinates == "spherical":
         if grid.rdims_ind == (0, 1):
             r = mesh1

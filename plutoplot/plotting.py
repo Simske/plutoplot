@@ -37,8 +37,8 @@ def plot(
             (xlabel, ylabel), (X, Y) = grid.mesh_edge_cartesian
 
         else:
-            ax.set_xlabel(f"${grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}$")
-            ax.set_ylabel(f"${grid.mapping_tex[f'x{grid.rdims_ind[1]+1}']}$")
+            xlabel = f"{grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}"
+            ylabel = f"{grid.mapping_tex[f'x{grid.rdims_ind[1]+1}']}"
             X, Y = grid.xni[grid.rdims_ind[0]], grid.xni[grid.rdims_ind[1]]
 
         if ax is None:
