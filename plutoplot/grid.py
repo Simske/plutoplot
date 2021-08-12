@@ -140,7 +140,7 @@ class Grid:
         # cell widths
         self.dxn = tuple(x[1:] - x[:-1] for x in self.xni)
         # domain widths
-        self.L = tuple(x[-1] - x[0] for x in self.dxn)
+        self.L = tuple(x[-1] - x[0] for x in self.xni)
 
         # reference in named attributes
         for i in range(3):
