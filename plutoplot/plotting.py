@@ -17,6 +17,7 @@ def plot(
     vmax=None,
     cmap=None,
     projection: bool = True,
+    **pcolormesh_kwargs,
 ) -> None:
     """Simple colorplot for 2-dim data"""
 
@@ -57,7 +58,9 @@ def plot(
         ax.set_xlabel(f"${xlabel}$")
         ax.set_ylabel(f"${ylabel}$")
 
-        im = ax.pcolormesh(X, Y, data[grid.rmask], vmin=vmin, vmax=vmax, cmap=cmap)
+        im = ax.pcolormesh(
+            X, Y, data[grid.rmask], vmin=vmin, vmax=vmax, cmap=cmap, **pcolormesh_kwargs
+        )
         ax.set_aspect(1)
         if cbar:
             formatter = ScalarFormatter()
