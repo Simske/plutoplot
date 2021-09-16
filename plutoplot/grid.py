@@ -150,7 +150,7 @@ class Grid:
         # cell widths
         self.dxn = tuple(x[1:] - x[:-1] for x in self.xni)
         # domain widths
-        self.L = tuple(x[-1] - x[0] for x in self.dxn)
+        self.L = tuple(x[-1] - x[0] for x in self.xni)
 
         # reference in named attributes
         for i in range(3):
@@ -254,7 +254,9 @@ class Grid:
 
 class GridSlice(Grid):
     def __init__(self, grid: Grid, slice_):
-        self.slice = slice_
+        self.slice = tuple(
+            s if isinstance(s, slice) else slice(s, s + 1) for s in slice_
+        )
         self.slicer = None
 
         self.gridfile_path = None
@@ -275,7 +277,7 @@ class GridSlice(Grid):
 
         self.xni = tuple(self.xni)
         self.dxn = tuple(x[1:] - x[:-1] for x in self.xni)
-        self.L = tuple(x[-1] - x[0] for x in self.dxn)
+        self.L = tuple(x[-1] - x[0] for x in self.xni)
 
         # reference in named attributes
         for i in range(3):
@@ -292,7 +294,9 @@ class GridSlice(Grid):
         if self.indexing == "ijk":
             self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.dims)
         else:
-            self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.dims)
+            self.rmask = tuple(
+                slice(None) if dim > 1 else 0 for dim in reversed(self.dims)
+            )
 
         self.size = grid.size
 

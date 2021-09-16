@@ -17,6 +17,7 @@ def plot(
     vmax=None,
     cmap=None,
     projection: bool = True,
+    **pcolormesh_kwargs,
 ) -> None:
     """Simple colorplot for 2-dim data"""
 
@@ -37,8 +38,8 @@ def plot(
             (xlabel, ylabel), (X, Y) = grid.mesh_edge_cartesian
 
         else:
-            ax.set_xlabel(f"${grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}$")
-            ax.set_ylabel(f"${grid.mapping_tex[f'x{grid.rdims_ind[1]+1}']}$")
+            xlabel = f"{grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}"
+            ylabel = f"{grid.mapping_tex[f'x{grid.rdims_ind[1]+1}']}"
             X, Y = grid.xni[grid.rdims_ind[0]], grid.xni[grid.rdims_ind[1]]
 
         if ax is None:
@@ -57,7 +58,9 @@ def plot(
         ax.set_xlabel(f"${xlabel}$")
         ax.set_ylabel(f"${ylabel}$")
 
-        im = ax.pcolormesh(X, Y, data[grid.rmask], vmin=vmin, vmax=vmax, cmap=cmap)
+        im = ax.pcolormesh(
+            X, Y, data[grid.rmask], vmin=vmin, vmax=vmax, cmap=cmap, **pcolormesh_kwargs
+        )
         ax.set_aspect(1)
         if cbar:
             formatter = ScalarFormatter()

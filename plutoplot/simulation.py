@@ -1,6 +1,7 @@
 import multiprocessing
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from .grid import Grid
@@ -290,6 +291,7 @@ class Simulation:
 
                 def handler(i):
                     self[i].plot(*args, **kwargs)
+                    plt.show()
 
             else:
 
