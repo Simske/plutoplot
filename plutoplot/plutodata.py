@@ -131,6 +131,10 @@ class PlutoData:
             numpy.memmap: Memorymap to data
         """
         if self.metadata.format in ("dbl.h5", "flt.h5"):
+            if self.grid.indexing == "ijk":
+                raise NotImplementedError(
+                    "ijk indexing not implemented for HDF5 outputs. Use indexing=kji"
+                )
             try:
                 self.h5file
             except AttributeError:
