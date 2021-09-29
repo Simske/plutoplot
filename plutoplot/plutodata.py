@@ -46,8 +46,8 @@ class PlutoData:
 
         self._data = {}
         self.slicer = Slicer(
-            lambda slice_: PlutoData(
-                self.n, self.metadata, self.grid.slicer[slice_], self.simulation
+            lambda slice_: PlutoDataSlice(
+                self,
             )
         )
 
@@ -178,7 +178,7 @@ class PlutoData:
                     offset=offset,
                     shape=self.grid.data_shape,
                 )
-            )[self.grid.slice],
+            ),
         )
 
     def _post_load_process(self, varname, data: np.ndarray):
@@ -218,7 +218,7 @@ class PlutoData:
 
     def __str__(self) -> str:
         return (
-            f"PlutoData, output nr: {self.n}, time: {self.t}, simulation step: {self.nstep}\n"
+            f"{type(self).__name__}, output nr: {self.n}, time: {self.t}, simulation step: {self.nstep}\n"
             f"data directory: '{self.metadata.data_path}'\n"
             f"resolution: {self.grid.dims}, {self.grid.coordinates} coordinates\n"
             f"Variables: {' '.join(self.metadata.vars)}"
@@ -233,7 +233,7 @@ class PlutoData:
     def _repr_markdown_(self) -> str:
         """Jupyter pretty print"""
         return (
-            f"**PlutoData**, output nr: {self.n}, time: {self.t}, simulation step: {self.nstep}  \n"
+            f"**{type(self).__name__}**, output nr: {self.n}, time: {self.t}, simulation step: {self.nstep}  \n"
             f"data directory: `{self.metadata.data_path}`  \n"
             f"Data vars: `{'` `'.join(self.metadata.vars)}`  \n"
         ) + self.grid._repr_markdown_()
@@ -246,3 +246,41 @@ class PlutoData:
             + [attr for attr in dir(self.metadata) if not attr.startswith("_")]
             + list(self.grid.mapping_vars)
         )
+
+
+class PlutoDataSlice(PlutoData):
+    def __init__(self, parent: PlutoData, *, sliced_grid: Grid = None, slice_=None):
+        self.parent = parent
+        self.n = parent.n
+        self.metadata = parent.metadata
+        self.simulation = parent.simulation
+
+        self.t, self.sim_dt, self.nstep = (
+            parent.metadata.t[self.n],
+            parent.metadata.sim_dt[self.n],
+            parent.metadata.nstep[self.n],
+        )
+
+        self.slicer = None
+
+        if sliced_grid is not None and slice_ is None:
+            self.grid = sliced_grid
+        elif slice_ is not None and sliced_grid is None:
+            self.grid = self.parent.slicer[slice_]
+        elif sliced_grid is not None and slice_ is not None:
+            raise RuntimeError(
+                "PlutoDataSlice: Only one of sliced_grid or slice_ can be set"
+            )
+        else:
+            raise RuntimeError(
+                "PlutoDataSlice: Either sliced_grid or slice_ must be set"
+            )
+
+    def __getitem__(self, var: str) -> np.memmap:
+        return self.parent[var][self.grid.slice]
+
+    def __delitem__(self, var: str):
+        del self.parent[var]
+
+    def _load_var(self, varname):
+        raise NotImplementedError("_load_var is only implemented on parent object")
