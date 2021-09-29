@@ -34,6 +34,7 @@ class Simulation:
         path: Path = ".",
         format: str = None,
         coordinates: str = None,
+        indexing: str = "ijk",
     ):
         self.parent = None
         self.path = Path(path)
@@ -81,7 +82,7 @@ class Simulation:
 
         ## Read grid ##
         # coordinate system will be read from gridfile if `coordinates is None`
-        self.grid = Grid(self.data_path / "grid.out", coordinates)
+        self.grid = Grid(self.data_path / "grid.out", coordinates, indexing=indexing)
 
         # slicer
         self.slicer = Slicer(lambda slice_: SimulationSlice(self, slice_))
