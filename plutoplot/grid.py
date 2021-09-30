@@ -166,8 +166,10 @@ class Grid:
 
         self.data_shape = tuple(reversed(dims))
         if self.indexing == "ijk":
+            self.shape = self.dims
             self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.dims)
         else:
+            self.shape = tuple(reversed(self.dims))
             self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.data_shape)
 
         self.size = np.product(self.dims)
@@ -254,9 +256,7 @@ class Grid:
 
 class GridSlice(Grid):
     def __init__(self, grid: Grid, slice_):
-        self.slice = tuple(
-            s if isinstance(s, slice) else slice(s, s + 1) for s in slice_
-        )
+        self.slice = normalize_slice(slice_, grid.shape)
         self.slicer = None
 
         self.gridfile_path = None
@@ -265,17 +265,14 @@ class GridSlice(Grid):
         self.T = grid.T
         self.indexing = grid.indexing
 
-        sl_ind = (lambda i: i) if self.indexing == "ijk" else (lambda i: 2 - i)
-        self.xn = tuple(x[self.slice[sl_ind(i)]] for i, x in enumerate(grid.xn))
-        self.xni = []
-        for i in range(3):
-            stop = self.slice[sl_ind(i)].stop
-            step = self.slice[sl_ind(i)].step
-            if stop is not None:
-                stop += 1 if step is None else step
-            self.xni.append(grid.xni[i][self.slice[sl_ind(i)].start : stop : step])
+        # reverse slice depending on indexing
+        slice_ijk = reversed(self.slice) if self.indexing == "kji" else self.slice
 
-        self.xni = tuple(self.xni)
+        self.xn = tuple(x[sl] for sl, x in zip(slice_ijk, grid.xn))
+        self.xni = tuple(
+            x[sl.start : sl.stop + sl.step : sl.step]
+            for sl, x in zip(slice_ijk, grid.xni)
+        )
         self.dxn = tuple(x[1:] - x[:-1] for x in self.xni)
         self.L = tuple(x[-1] - x[0] for x in self.xni)
 
@@ -301,3 +298,54 @@ class GridSlice(Grid):
         self.size = grid.size
 
         # TODO repr and str
+
+
+def normalize_slice(slice_: tuple, shape: tuple) -> tuple:
+    """Check bounds of 3D slice, and preserve 3d structure of array
+    for 1-high direction slice
+
+    Args:
+        slice_ (tuple): 3D slice, consisting of `int` and `slice`
+        shape (tuple): dimensions of domain
+
+    Returns:
+        tuple
+
+    Raises:
+        IndexError: if any of the bounds check don't work
+    """
+    if len(slice_) != 3:
+        raise IndexError("Please specify 3D slice for clarity")
+
+    newslice = []
+    for dimslice, dimsize in zip(slice_, shape):
+        if isinstance(dimslice, slice):
+            if dimslice.start is None:
+                start = 0
+            elif dimslice.start >= dimsize or dimslice.start < -dimsize:
+                raise IndexError("Slice out of bounds")
+            elif dimslice.start < 0:
+                start = dimsize + dimslice.start
+
+            if dimslice.stop is None:
+                stop = dimsize
+            elif dimslice.stop > dimsize or dimslice.stop < -dimsize:
+                raise IndexError("Slice out of bounds")
+            elif dimslice.stop < 0:
+                stop = dimsize + dimslice.stop
+
+            if dimslice.step is None:
+                step = 1
+
+            newslice.append(slice(start, stop, step))
+
+        else:
+            start = dimslice
+            if start < 0:
+                start = dimsize + dimslice
+            if not (0 <= start < dimsize):
+                raise IndexError("Slice out of bounds")
+
+            newslice.append(slice(start, start + 1, 1))
+
+    return tuple(newslice)
