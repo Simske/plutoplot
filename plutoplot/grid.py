@@ -320,21 +320,23 @@ def normalize_slice(slice_: tuple, shape: tuple) -> tuple:
     newslice = []
     for dimslice, dimsize in zip(slice_, shape):
         if isinstance(dimslice, slice):
-            if dimslice.start is None:
+            start, stop, step = dimslice.start, dimslice.stop, dimslice.step
+
+            if start is None:
                 start = 0
-            elif dimslice.start >= dimsize or dimslice.start < -dimsize:
+            elif start >= dimsize or start < -dimsize:
                 raise IndexError("Slice out of bounds")
-            elif dimslice.start < 0:
+            elif start < 0:
                 start = dimsize + dimslice.start
 
-            if dimslice.stop is None:
+            if stop is None:
                 stop = dimsize
-            elif dimslice.stop > dimsize or dimslice.stop < -dimsize:
+            elif stop > dimsize or stop < -dimsize:
                 raise IndexError("Slice out of bounds")
-            elif dimslice.stop < 0:
-                stop = dimsize + dimslice.stop
+            elif stop < 0:
+                stop = dimsize + stop
 
-            if dimslice.step is None:
+            if step is None:
                 step = 1
 
             newslice.append(slice(start, stop, step))
