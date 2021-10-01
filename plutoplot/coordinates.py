@@ -12,7 +12,7 @@ base_coordinate_mappings: Dict[str, Dict[str, str]] = {
 }
 
 
-@lru_cache
+@lru_cache()
 def mapping_grid(coordinates: str) -> Dict[str, str]:
     """Generate variable name mapping for specified coordinate system.
 
@@ -38,7 +38,7 @@ def mapping_grid(coordinates: str) -> Dict[str, str]:
     return mapping
 
 
-@lru_cache
+@lru_cache()
 def mapping_vars(coordinates: str) -> Dict[str, str]:
     """Coordinate name mapping for velocity components
 
@@ -78,7 +78,7 @@ tex_chars = {
 }
 
 
-@lru_cache
+@lru_cache()
 def mapping_tex(coordinates: str) -> Dict[str, str]:
     """Coordinate and variable mapping to LaTeX math mode symbols.
 
