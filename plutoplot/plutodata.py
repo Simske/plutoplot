@@ -46,9 +46,7 @@ class PlutoData:
 
         self._data = {}
         self.slicer = Slicer(
-            lambda slice_: PlutoDataSlice(
-                self,
-            )
+            lambda slice_: PlutoDataSlice(self, self.grid.slicer[slice_])
         )
 
     def __getattr__(self, attr: str):
@@ -253,7 +251,7 @@ class PlutoData:
 
 
 class PlutoDataSlice(PlutoData):
-    def __init__(self, parent: PlutoData, *, sliced_grid: Grid = None, slice_=None):
+    def __init__(self, parent: PlutoData, sliced_grid: Grid = None):
         self.parent = parent
         self.n = parent.n
         self.metadata = parent.metadata
@@ -265,20 +263,9 @@ class PlutoDataSlice(PlutoData):
             parent.metadata.nstep[self.n],
         )
 
-        self.slicer = None
+        self.grid = sliced_grid
 
-        if sliced_grid is not None and slice_ is None:
-            self.grid = sliced_grid
-        elif slice_ is not None and sliced_grid is None:
-            self.grid = self.parent.slicer[slice_]
-        elif sliced_grid is not None and slice_ is not None:
-            raise RuntimeError(
-                "PlutoDataSlice: Only one of sliced_grid or slice_ can be set"
-            )
-        else:
-            raise RuntimeError(
-                "PlutoDataSlice: Either sliced_grid or slice_ must be set"
-            )
+        self.slicer = None
 
     def __getitem__(self, var: str) -> np.memmap:
         return self.parent[var][self.grid.slice]

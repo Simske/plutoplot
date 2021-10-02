@@ -85,7 +85,9 @@ class Simulation:
         self.grid = Grid(self.data_path / "grid.out", coordinates, indexing=indexing)
 
         # slicer
-        self.slicer = Slicer(lambda slice_: SimulationSlice(self, slice_))
+        self.slicer = Slicer(
+            lambda slice_: SimulationSlice(self, self.grid.slicer[slice_])
+        )
 
         # PlutoData cache
         self._data = {}
@@ -404,14 +406,14 @@ class SimulationIterator:
 
 
 class SimulationSlice(Simulation):
-    def __init__(self, parent, slice_):
+    def __init__(self, parent, sliced_grid):
         self.parent = parent
         self.path = self.parent.path
         self.data_path = self.parent.data_path
         self.format = self.parent.format
         self.metadata = self.parent.metadata
 
-        self.grid = self.parent.grid.slicer[slice_]
+        self.grid = sliced_grid
 
         self.slicer = None
 
