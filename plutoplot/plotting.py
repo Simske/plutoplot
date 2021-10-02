@@ -3,23 +3,26 @@ import numpy as np
 from matplotlib.ticker import ScalarFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-from .grid import Grid
+from .grid import Grid, GridSlice
 
 
 def plot(
     data: np.ndarray,
     grid: Grid,
+    *,
     ax=None,
     label: str = None,
     figsize=None,
     cbar=True,
-    vmin=None,
-    vmax=None,
-    cmap=None,
     projection: bool = True,
-    **pcolormesh_kwargs,
+    **mpl_kwargs,
 ) -> None:
     """Simple colorplot for 2-dim data"""
+
+    if data.shape != grid.shape and not (
+        isinstance(grid, GridSlice) and data.shape == grid.shape
+    ):
+        raise RuntimeError("Plotting: Grid shape not compatible with data")
 
     if len(grid.rdims) == 1:
         if ax is None:
@@ -31,7 +34,7 @@ def plot(
         ax.set_ylabel(label)
         ax.grid()
 
-        ax.plot(grid.xn[grid.rdims_ind[0]], data[grid.rmask], label=label)
+        ax.plot(grid.xn[grid.rdims_ind[0]], data[grid.rmask], label=label, **mpl_kwargs)
 
     elif len(grid.rdims) == 2:
         if projection:
@@ -58,16 +61,16 @@ def plot(
         ax.set_xlabel(f"${xlabel}$")
         ax.set_ylabel(f"${ylabel}$")
 
-        im = ax.pcolormesh(
-            X, Y, data[grid.rmask], vmin=vmin, vmax=vmax, cmap=cmap, **pcolormesh_kwargs
-        )
+        im = ax.pcolormesh(X, Y, data[grid.rmask], **mpl_kwargs)
         ax.set_aspect(1)
         if cbar:
             formatter = ScalarFormatter()
             formatter.set_powerlimits((-2, 2))
             divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="10%", pad=0.05)
+            cax = divider.append_axes("right", size=0.05, pad=0.05)
             plt.colorbar(im, label=label, format=formatter, cax=cax)
+
+            # plt.colorbar(im, label=label, format=formatter, ax=ax, pad=0.05)
 
     elif len(grid.rdims) == 3:
         raise NotImplementedError("3D plotting not supported (yet)")
