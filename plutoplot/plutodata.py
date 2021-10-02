@@ -198,8 +198,6 @@ class PlutoData:
         self, var: str, grid=None, label: str = None, show_title: bool = True, **kwargs
     ):
         """TODO"""
-        if var is None:
-            var = self.vars[0]
         if isinstance(var, str):
             varname = var
             var = getattr(self, var)
