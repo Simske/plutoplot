@@ -1,0 +1,8 @@
+site_name: plutoplot Documentation
+
+theme:
+  name: material
+
+plugins:
+  - search
+#   - mkdocstrings
