@@ -1,5 +1,6 @@
 # plutoplot - Plutocode data loading and plotting library
 ![PyPI](https://img.shields.io/pypi/v/plutoplot)
+[![Documentation](https://readthedocs.org/projects/plutoplot/badge/?version=latest)](https://plutoplot.readthedocs.io/en/latest/?badge=latest)
 [![pre-commit](https://github.com/Simske/plutoplot/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/Simske/plutoplot/actions/workflows/pre-commit.yml)
 [![testing](https://github.com/Simske/plutoplot/actions/workflows/tox.yml/badge.svg)](https://github.com/Simske/plutoplot/actions/workflows/tox.yml)
 ![License](https://img.shields.io/github/license/simske/plutoplot)
