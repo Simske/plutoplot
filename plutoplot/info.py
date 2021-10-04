@@ -34,7 +34,6 @@ def info(simulationpath):
     sim = sims[0]
     output = (
         f"PLUTO simulation at '{sim.path}'\n"
-        f"Data directory at '$SIM_DIR/{sim.data_path.relative_to(sim.path)}'\n"
         f"{sim.grid.coordinates.capitalize()} grid with dimensions {sim.dims}\n"
         f"Domain: x1: {sim.x1i[0]:.2e} .. {sim.x1i[-1]:.2e} (Lx1 = {sim.Lx1:.2e})\n"
         f"        x2: {sim.x2i[0]:.2e} .. {sim.x2i[-1]:.2e} (Lx2 = {sim.Lx2:.2e})\n"
