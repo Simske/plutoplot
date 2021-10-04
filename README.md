@@ -134,13 +134,13 @@ The PlutoData object provides a `plot()` function, which will automatically proj
 ```python
 sim[-1].plot('rho')
 ```
-![Density plot](docs/docs/img/quick_start_plot_projected.png)
+![Density plot](docs/docs/img/quick_start_plot_projected.jpg)
 
 The projection can also be turned off, an arbitrary options which will be passed to matplotlib can be given:
 ```python
 sim[-1].plot('rho', projection=False)
 ```
-![Density plot](docs/docs/img/quick_start_plot_not-projected.png)
+![Density plot](docs/docs/img/quick_start_plot_not-projected.jpg)
 
 If a plot of a custom quantitity is needed, a array instead of a variable name can be given:
 ```
