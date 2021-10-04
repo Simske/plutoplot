@@ -292,7 +292,7 @@ class Simulation:
                 handler,
                 i=widgets.IntSlider(min=0, max=len(self) - 1, value=self._index(n)),
             )
-            plot.children[0].description = "Simulation frame"
+            plot.children[0].description = "Step"
             plot.children[0].layout.width = "40%"
             display(plot)
 

@@ -19,9 +19,11 @@ def plot(
 ) -> None:
     """Simple colorplot for 2-dim data"""
 
-    if data.shape != grid.shape and not (
-        isinstance(grid, GridSlice) and data.shape == grid.shape
-    ):
+    if isinstance(grid, GridSlice) and data.shape == grid.shape:
+        data = data[grid.slice]
+    elif data.shape == grid.shape:
+        pass
+    else:
         raise RuntimeError("Plotting: Grid shape not compatible with data")
 
     if len(grid.rdims) == 1:
@@ -43,7 +45,7 @@ def plot(
         else:
             xlabel = f"{grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}"
             ylabel = f"{grid.mapping_tex[f'x{grid.rdims_ind[1]+1}']}"
-            X, Y = grid.xni[grid.rdims_ind[0]], grid.xni[grid.rdims_ind[1]]
+            X, Y = grid.mesh_edge
 
         if ax is None:
             if figsize is None:
