@@ -290,10 +290,12 @@ class GridSlice(Grid):
         self.data_shape = None
         if self.indexing == "ijk":
             self.rmask = tuple(slice(None) if dim > 1 else 0 for dim in self.dims)
+            self.shape = self.dims
         else:
             self.rmask = tuple(
                 slice(None) if dim > 1 else 0 for dim in reversed(self.dims)
             )
+            self.shape = tuple(reversed(self.dims))
 
         self.size = grid.size
 

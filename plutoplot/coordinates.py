@@ -144,7 +144,7 @@ def transform_mesh(grid, mesh1, mesh2):
     elif grid.coordinates == "polar":
         if grid.rdims_ind == (0, 1):
             x = mesh1 * np.cos(mesh2)
-            y = mesh2 * np.sin(mesh2)
+            y = mesh1 * np.sin(mesh2)
             return ("x", "y"), (x, y)
         elif grid.rdims_ind == (0, 2):
             return ("r", "z"), (mesh1, mesh2)
