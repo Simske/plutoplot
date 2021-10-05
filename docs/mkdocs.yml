@@ -1,8 +1,12 @@
 site_name: plutoplot Documentation
 
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+
 theme:
   name: material
 
 plugins:
   - search
-#   - mkdocstrings
+  - mkdocstrings
