@@ -3,10 +3,23 @@ site_name: plutoplot Documentation
 nav:
   - Home: index.md
   - Quick Start: quickstart.md
+  - Loading Simulations: loading.md
 
 theme:
   name: material
 
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+
 plugins:
   - search
-  - mkdocstrings
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          rendering:
+            show_source: false
+      watch:
+        - ../plutoplot
