@@ -69,7 +69,7 @@ def plot(
             formatter = ScalarFormatter()
             formatter.set_powerlimits((-2, 2))
             divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size=0.05, pad=0.05)
+            cax = divider.append_axes("right", size=0.15, pad=0.05)
             plt.colorbar(im, label=label, format=formatter, cax=cax)
 
             # plt.colorbar(im, label=label, format=formatter, ax=ax, pad=0.05)
