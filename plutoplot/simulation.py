@@ -36,6 +36,22 @@ class Simulation:
         coordinates: str = None,
         indexing: str = "ijk",
     ):
+        """Create Simulation object from PLUTO output directory
+
+        Args:
+            path (Path or str, optional): Path to simulation directory / data directory
+            format (str, optional): PLUTO output format to load.
+                Currently supported: 'dbl', 'flt', 'vtk', 'dbl.h5', 'flt.h5'.
+                By default uses the first found.
+            coordinates (str, optional): name of coordinates system of simulation.
+                Will be read from gridfile by default
+                Supported: (')
+            indexing (str, optional): Array index convention. Supports ("ijk", "kji").
+
+        Raises:
+            FileNotFoundError: if no metadata or grid files are found.
+            NotImplementedError: if unsupported format is requested
+        """
         self.parent = None
         self.path = Path(path)
 
