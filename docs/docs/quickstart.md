@@ -14,7 +14,7 @@ pip install --upgrade plutoplot[hdf5]
 pip install --upgrade plutoplot[interactive,hdf5]
 ```
 
-To install the current development version from this branch:
+To install the current development version from Github:
 ```bash
 pip install --upgrade "plutoplot @ git+https://github.com/simske/plutoplot"
 ```

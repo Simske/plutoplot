@@ -4,6 +4,9 @@ nav:
   - Home: index.md
   - Quick Start: quickstart.md
   - Loading Simulations: loading.md
+  - Data Access: data-access.md
+  - Accessing Metadata: metadata.md
+  - Plotting: plotting.md
 
 theme:
   name: material
@@ -23,6 +26,8 @@ plugins:
         python:
           rendering:
             show_source: false
+            show_root_heading: true
+            heading_level: 3
       watch:
         - ../plutoplot
 
