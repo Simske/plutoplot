@@ -260,6 +260,17 @@ class Pluto_ini(OrderedDict):
         """Convert to pluto.ini format, with columns aligned inside sections"""
         return "\n\n".join(str(section) for section in self.sections())
 
+    def _split_key(self, key) -> tuple:
+        # (section, key)
+        if isinstance(key, tuple):
+            return key
+        sep = key.find("/")
+        # "section/key"
+        if sep > -1:
+            return key[:sep], key[sep + 1 :]
+        # "section"
+        return (key,)
+
     def __getitem__(self, key):
         """ini[key] with multiple syntaxes:
 
@@ -267,23 +278,23 @@ class Pluto_ini(OrderedDict):
         - `ini["section","key"]
         - `ini["section/key"]
         """
-        if isinstance(key, tuple):
-            return self[key[0]][key[1]]
-        sep = key.find("/")
-        if sep > -1:
-            return self[key[:sep]][key[sep + 1 :]]
-        return super().__getitem__(key)
+        key = self._split_key(key)
+        if len(key) == 2:
+            return super().__getitem__(key[0])[key[1]]
+        return super().__getitem__(key[0])
 
     def __setitem__(self, key, value):
         """ini[key] = value
         For `key` syntax check `__getitem__()`
         """
-        if isinstance(key, tuple):
-            self[key[0]][key[1]] = value
-        sep = key.find("/")
-        if sep > -1:
-            self[key[:sep]][key[sep + 1 :]] = value
-        super().__setitem__(key, value)
+        key = self._split_key(key)
+        if len(key) == 1:
+            super().__setitem__(key[0], value)
+        else:
+            if key[0] in self:
+                self[key[0]][key[1]] = value
+            else:
+                super().__setitem__(key[0], self.Section(key[0], {key[1]: value}))
 
     def write(self, path: Path = None) -> None:
         """Write pluto.ini to file.
