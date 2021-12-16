@@ -6,5 +6,6 @@ del get_versions
 from matplotlib.pyplot import show
 
 from . import misc
+from .grid import Grid
 from .plutodata import PlutoData
 from .simulation import Simulation

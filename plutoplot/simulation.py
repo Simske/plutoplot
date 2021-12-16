@@ -42,7 +42,7 @@ class Simulation:
             path (Path or str, optional): Path to simulation directory / data directory
             format (str, optional): PLUTO output format to load.
                 Currently supported: 'dbl', 'flt', 'vtk', 'dbl.h5', 'flt.h5'.
-                By default uses the first found.
+                By default uses the first {format}.out file found.
             coordinates (str, optional): name of coordinates system of simulation.
                 Will be read from gridfile by default
                 Supported: (')
@@ -326,17 +326,12 @@ class Simulation:
 
     def __str__(self) -> str:
         return (
-            f"PLUTO {type(self).__name__} at '{self.path}'\n"
-            f"Data directory at '$SIM_DIR/{self.data_path.relative_to(self.path)}'\n"
-            f"{self.grid.coordinates.capitalize()} grid with dimensions {self.dims}\n"
-            f"Domain: x1: {self.x1l[0]:.2e} .. {self.x1r[-1]:.2e} (Lx1 = {self.Lx1:.2e})\n"
-            f"        x2: {self.x2l[0]:.2e} .. {self.x2r[-1]:.2e} (Lx2 = {self.Lx2:.2e})\n"
-            f"        x2: {self.x3l[0]:.2e} .. {self.x3r[-1]:.2e} (Lx3 = {self.Lx3:.2e})\n"
-            f"Available variables: {' '.join(self.vars)}\n"
-            "Data files:\n"
-            f"    Format {self.format}: {len(self)} files, "
-            f"last time {self.t[-1]}, data timestep {self.dt.mean():.2e}\n"
-        )
+            f"PLUTO {type(self).__name__}: path: '{self.path}', "
+            f"data directory '$sim_path/{self.data_path.relative_to(self.path)}'\n"
+            f"Data vars: {', '.join(self.metadata.vars)}\n"
+            f"Data files: Format `{self.format}`: {len(self)} files,"
+            f" last time {self.t[-1]}, data timestep {self.dt.mean():.2e}  \n"
+        ) + str(self.grid)
 
     def __repr__(self) -> str:
         return (
