@@ -232,8 +232,12 @@ class Grid:
         raise AttributeError(f"{type(self).__name__} has no attribute '{name}'")
 
     def __str__(self) -> str:
+        mapping_inv = {value: key for key, value in self.mapping_grid.items()}
         return (
-            f"PLUTO Grid, Dimensions {self.dims}, Coordinate System: {self.coordinates}"
+            f"PLUTO Grid Dimensions: {self.dims}, {self.coordinates} coordinate system\n"
+            f"{mapping_inv['x1']}: {self.x1i[0]:.2f}..{self.x1i[-1]:.2f}, Lx1={self.Lx1:.2f}, N1={self.dims[0]}\n"
+            f"{mapping_inv['x2']}: {self.x2i[0]:.2f}..{self.x2i[-1]:.2f}, Lx1={self.Lx2:.2f}, N1={self.dims[1]}\n"
+            f"{mapping_inv['x3']}: {self.x3i[0]:.2f}..{self.x3i[-1]:.2f}, Lx1={self.Lx3:.2f}, N1={self.dims[2]}\n"
         )
 
     def __repr__(self) -> str:
