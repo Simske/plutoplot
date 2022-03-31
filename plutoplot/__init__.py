@@ -1,9 +1,7 @@
-from ._version import get_versions
+import importlib.metadata
 
-__version__ = get_versions()["version"]
-del get_versions
-
-from matplotlib.pyplot import show
+__version__ = importlib.metadata.version("plutoplot")
+del importlib
 
 from . import misc
 from .grid import Grid
