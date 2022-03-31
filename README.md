@@ -1,4 +1,5 @@
 # plutoplot - Plutocode data loading and plotting library
+![GitHub release](https://img.shields.io/github/v/release/simske/plutoplot?include_prereleases&label=Github%20Release)
 ![PyPI](https://img.shields.io/pypi/v/plutoplot)
 [![Documentation](https://readthedocs.org/projects/plutoplot/badge/?version=latest)](https://plutoplot.readthedocs.io/en/latest/?badge=latest)
 [![pre-commit](https://github.com/Simske/plutoplot/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/Simske/plutoplot/actions/workflows/pre-commit.yml)

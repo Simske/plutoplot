@@ -5,7 +5,7 @@ nav:
   - Quick Start: quickstart.md
   - Loading Simulations: loading.md
   - Data Access: data-access.md
-  - Accessing Metadata: metadata.md
+  - Accessing pluto.ini & definitions.h: metadata.md
   - Plotting: plotting.md
 
 theme:

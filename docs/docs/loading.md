@@ -31,32 +31,33 @@ After loading the `Simulation`-object has the following attributes:
           show_root_toc_entry: false
 
 To show information about the simulation, just use the string representation:
-```python
-print(sim)
-```
-```
-PLUTO Simulation: path: 'path/to/simulation', data directory '$sim_path/.'
-Data vars: rho, vx1, vx2, vx3
-Data files: Format `flt`: 2 files, last time 1.0, data timestep 1.00e+00  
-PLUTO Grid Dimensions: (128, 1, 384), spherical coordinate system
-r: 0.40..2.50, Lx1=2.10, N1=128
-theta: 1.45..1.57, Lx1=0.12, N1=1
-phi: 0.00..6.28, Lx1=6.28, N1=384
-```
-or use the Jupyter Notebook formatting
-```python
-sim
-```
-> **PLUTO Simulation** path: `/home/simeon/masterproject/PLUTO/test-problems/HD/Disk_Planet/03_0`, data directory `$sim_path/.`  
-> Data vars: `rho` `vx1` `vx2` `vx3`  
-> Data files: Format `flt`: 2 files,last time 1.0, data timestep 1.00e+00  
-> **PLUTO Grid** Dimensions (128, 1, 384), spherical coordinate system
->
-> |   |   |   | L | N |
-> |---|---|---|---|---|
-> |$r$|0.40|2.50|2.10|128|
-> |$\theta$|1.45|1.57|0.12|1|
-> |$\phi$|0.00|6.28|6.28|384|
+!!! example
+    ```python
+    print(sim)
+    ```
+    ```
+    PLUTO Simulation: path: 'path/to/simulation', data directory '$sim_path/.'
+    Data vars: rho, vx1, vx2, vx3
+    Data files: Format `flt`: 2 files, last time 1.0, data timestep 1.00e+00  
+    PLUTO Grid Dimensions: (128, 1, 384), spherical coordinate system
+    r: 0.40..2.50, Lx1=2.10, N1=128
+    theta: 1.45..1.57, Lx1=0.12, N1=1
+    phi: 0.00..6.28, Lx1=6.28, N1=384
+    ```
+    or use the Jupyter Notebook formatting
+    ```python
+    sim
+    ```
+    > **PLUTO Simulation** path: `/home/simeon/masterproject/PLUTO/test-problems/HD/Disk_Planet/03_0`, data directory `$sim_path/.`  
+    > Data vars: `rho` `vx1` `vx2` `vx3`  
+    > Data files: Format `flt`: 2 files,last time 1.0, data timestep 1.00e+00  
+    > **PLUTO Grid** Dimensions (128, 1, 384), spherical coordinate system
+    >
+    > |   |   |   | L | N |
+    > |---|---|---|---|---|
+    > |$r$|0.40|2.50|2.10|128|
+    > |$\theta$|1.45|1.57|0.12|1|
+    > |$\phi$|0.00|6.28|6.28|384|
 
 
 ## Slicing simulations
