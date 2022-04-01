@@ -1,18 +1,20 @@
 """Miscellaneous tools"""
 
+from typing import Dict, Any, Type, Callable, Tuple
+
 # functools.cached_property exists for Python >=3.8
 # use own implementation for version before
 try:
     from functools import cached_property
 except ImportError:
 
-    def cached_property(func):
+    def cached_property(func: Callable[[], Any]) -> property:
         """Cache class property decorator
 
         Caches attribute under `_attr_`.
         """
 
-        def wrapper(self):
+        def wrapper(self) -> Any:
             cached_name = "_" + func.__name__
             try:
                 return getattr(self, cached_name)
@@ -31,9 +33,9 @@ class Slicer:
     slice as additional kwarg (with name `slice_`) to the class.
     """
 
-    def __init__(self, SliceClass, **kwargs):
+    def __init__(self, SliceClass: Type[Any], **kwargs: Any) -> None:
         self.SliceClass = SliceClass
         self.kwargs = kwargs
 
-    def __getitem__(self, slice_):
+    def __getitem__(self, slice_: Tuple):
         return self.SliceClass(slice_=slice_, **self.kwargs)

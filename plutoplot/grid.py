@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Tuple
 
 import numpy as np
 
@@ -58,9 +58,9 @@ class Grid:
         """
         self.gridfile_path: Path = Path(gridfile)
         self.coordinates: Optional[str] = None
-        self.mapping_grid: Dict[str, str] = None
-        self.mapping_vars: Dict[str, str] = None
-        self.mapping_tex: Dict[str, str] = None
+        self.mapping_grid: Dict[str, str] = {}
+        self.mapping_vars: Dict[str, str] = {}
+        self.mapping_tex: Dict[str, str] = {}
 
         # helper function to transpose arrays if necessary
         if indexing == "ijk":
@@ -114,7 +114,7 @@ class Grid:
         """
         # to be filled with left and right cell interfaces
         x = []
-        dims = []
+        dims: List[int] = []
         with gridfile_path.open() as gf:
             # Gridfile header
             header = False  # marker if gf pointer is in header
