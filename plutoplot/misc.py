@@ -1,21 +1,26 @@
 """Miscellaneous tools"""
 
+# functools.cached_property exists for Python >=3.8
+# use own implementation for version before
+try:
+    from functools import cached_property
+except ImportError:
 
-def cached_property(func):
-    """Cache class property decorator
+    def cached_property(func):
+        """Cache class property decorator
 
-    Caches attribute under `_attr_`.
-    """
+        Caches attribute under `_attr_`.
+        """
 
-    def wrapper(self):
-        cached_name = "_" + func.__name__
-        try:
+        def wrapper(self):
+            cached_name = "_" + func.__name__
+            try:
+                return getattr(self, cached_name)
+            except AttributeError:
+                setattr(self, cached_name, func(self))
             return getattr(self, cached_name)
-        except AttributeError:
-            setattr(self, cached_name, func(self))
-        return getattr(self, cached_name)
 
-    return property(wrapper)
+        return property(wrapper)
 
 
 class Slicer:
