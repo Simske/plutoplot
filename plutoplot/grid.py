@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional, List, Tuple
 
 import numpy as np
 
@@ -45,7 +45,9 @@ class Grid:
         * Generalize and document meshgrid functions
     """
 
-    def __init__(self, gridfile: Path, coordinates: str = None, indexing="ijk"):
+    def __init__(
+        self, gridfile: Path, coordinates: Optional[str] = None, indexing: str = "ijk"
+    ):
         """Initialize Grid from gridfile
 
         Args:
@@ -55,10 +57,10 @@ class Grid:
             indexing (:obj:`str`, optional): index order for arrays. 'ijk' or 'kji'
         """
         self.gridfile_path: Path = Path(gridfile)
-        self.coordinates: str = None
-        self.mapping_grid: Dict[str, str] = None
-        self.mapping_vars: Dict[str, str] = None
-        self.mapping_tex: Dict[str, str] = None
+        self.coordinates: Optional[str] = None
+        self.mapping_grid: Dict[str, str] = {}
+        self.mapping_vars: Dict[str, str] = {}
+        self.mapping_tex: Dict[str, str] = {}
 
         # helper function to transpose arrays if necessary
         if indexing == "ijk":
@@ -90,7 +92,9 @@ class Grid:
         self.mapping_vars = mapping_vars(coordinates)
         self.mapping_tex = mapping_tex(coordinates)
 
-    def read_gridfile(self, gridfile_path: Path, coordinates: str = None) -> None:
+    def read_gridfile(
+        self, gridfile_path: Path, coordinates: Optional[str] = None
+    ) -> None:
         """Read and parse gridfile
 
         Args:
@@ -110,7 +114,7 @@ class Grid:
         """
         # to be filled with left and right cell interfaces
         x = []
-        dims = []
+        dims: List[int] = []
         with gridfile_path.open() as gf:
             # Gridfile header
             header = False  # marker if gf pointer is in header

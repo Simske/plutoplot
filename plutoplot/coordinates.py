@@ -1,8 +1,11 @@
 """Functions and mappings for coordinate grid"""
 from functools import lru_cache
-from typing import Dict
+from typing import TYPE_CHECKING, Dict, Tuple
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from .grid import Grid
 
 base_coordinate_mappings: Dict[str, Dict[str, str]] = {
     "cartesian": {"x": "x1", "y": "x2", "z": "x3"},
@@ -67,7 +70,7 @@ def mapping_vars(coordinates: str) -> Dict[str, str]:
     return mapping
 
 
-tex_chars = {
+tex_chars: Dict[str, str] = {
     "theta": r"\theta",
     "rho": r"\rho",
     "phi": r"\phi",
@@ -122,31 +125,43 @@ def mapping_tex(coordinates: str) -> Dict[str, str]:
     return mapping
 
 
-def transform_mesh(grid, mesh1, mesh2):
+def transform_mesh(
+    grid: "Grid",
+    mesh1: np.ndarray[np.dtype[np.float64], np.dtype[np.float64]],
+    mesh2: np.ndarray[np.dtype[np.float64], np.dtype[np.float64]],
+) -> Tuple[
+    Tuple[str, str],
+    Tuple[
+        np.ndarray[np.dtype[np.float64], np.dtype[np.float64]],
+        np.ndarray[np.dtype[np.float64], np.dtype[np.float64]],
+    ],
+]:
     if grid.coordinates == "cartesian":
-        return (
+        names = (
             f"{grid.mapping_tex[f'x{grid.rdims_ind[0]+1}']}",
             f"{grid.mapping_tex[f'x{grid.rdims_ind[1]+1}']}",
-        ), (mesh1, mesh2)
+        )
+        meshes = mesh1, mesh2
     elif grid.coordinates == "spherical":
         if grid.rdims_ind == (0, 1):
             r = mesh1
             z = r * np.cos(mesh2)
-            return ("r", "z"), (r, z)
+            names, meshes = ("r", "z"), (r, z)
         elif grid.rdims_ind == (0, 2):
             factor = mesh1 * np.sin(grid.x2[0])
             x = factor * np.cos(mesh2)
             y = factor * np.sin(mesh2)
-            return ("x", "y"), (x, y)
+            names, meshes = ("x", "y"), (x, y)
         raise NotImplementedError("Projection in (theta, phi) not supported")
     elif grid.coordinates == "cylindrical":
-        return ("r", "z"), (mesh1, mesh2)
+        names, meshes = ("r", "z"), (mesh1, mesh2)
     elif grid.coordinates == "polar":
         if grid.rdims_ind == (0, 1):
             x = mesh1 * np.cos(mesh2)
             y = mesh1 * np.sin(mesh2)
-            return ("x", "y"), (x, y)
+            names, meshes = ("x", "y"), (x, y)
         elif grid.rdims_ind == (0, 2):
-            return ("r", "z"), (mesh1, mesh2)
+            names, meshes = ("r", "z"), (mesh1, mesh2)
         else:
             raise NotImplementedError("Projection in (phi, z) not supported")
+    return names, meshes

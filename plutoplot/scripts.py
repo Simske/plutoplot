@@ -2,7 +2,7 @@
 import argparse
 
 
-def format_ini():
+def format_ini() -> None:
     """Entrypoint to format `pluto.ini` file"""
     from .metadata import Pluto_ini
 
